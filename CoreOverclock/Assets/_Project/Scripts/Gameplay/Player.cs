@@ -1,0 +1,146 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace CoreOverclock
+{
+    public class Player : MonoBehaviour
+    {
+        public const int MaxWeapons = 6;
+        const float WeaponOrbitRadius = 0.75f;
+
+        PlayerData data;
+        Rigidbody2D rb;
+        SpriteRenderer body, core;
+        Vector2 knock;
+        float invulnerableTimer, flashTimer, wallZapCooldown;
+        readonly List<Weapon> weapons = new();
+
+        public float MaxHP => data.maxHP;
+        public float HP { get; private set; }
+        public bool IsAlive => HP > 0f;
+        public float PickupRange => data.pickupRange;
+        public Vector2 Position => rb.position;
+        public IReadOnlyList<Weapon> Weapons => weapons;
+
+        public event Action Died;
+
+        public static Player Create(PlayerData data, Transform parent)
+        {
+            var go = new GameObject("Player") { layer = GameLayers.Player };
+            go.transform.SetParent(parent, false);
+            var p = go.AddComponent<Player>();
+            p.data = data;
+
+            p.rb = go.AddComponent<Rigidbody2D>();
+            p.rb.gravityScale = 0f;
+            p.rb.mass = 50f;
+            p.rb.freezeRotation = true;
+            p.rb.interpolation = RigidbodyInterpolation2D.Interpolate;
+            p.rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+            go.AddComponent<CircleCollider2D>().radius = 0.38f;
+
+            Visuals.Glow(go.transform, Palette.Player, 2.6f, 0.22f, 15);
+            p.body = Visuals.Sprite("Body", go.transform, ShapeSprites.NeonCircle, Palette.Player, 20, 0.95f);
+            p.core = Visuals.Sprite("Core", go.transform, ShapeSprites.Circle, Palette.Player, 21, 0.35f);
+            p.HP = data.maxHP;
+            return p;
+        }
+
+        public bool TryAddWeapon(WeaponData weaponData)
+        {
+            if (weapons.Count >= MaxWeapons || !weaponData) return false;
+            weapons.Add(Weapon.Create(weaponData, transform));
+            LayoutWeapons();
+            return true;
+        }
+
+        void LayoutWeapons()
+        {
+            for (int i = 0; i < weapons.Count; i++)
+            {
+                float angle = (90f + 360f / Mathf.Max(weapons.Count, 1) * i) * Mathf.Deg2Rad;
+                weapons[i].transform.localPosition = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * WeaponOrbitRadius;
+            }
+        }
+
+        public void ResetForWave()
+        {
+            HP = data.maxHP;
+            knock = Vector2.zero;
+            invulnerableTimer = 0f;
+            rb.position = Vector2.zero;
+            transform.position = Vector3.zero;
+            rb.linearVelocity = Vector2.zero;
+        }
+
+        void Update()
+        {
+            float dt = Time.deltaTime;
+            invulnerableTimer -= dt;
+            flashTimer -= dt;
+            wallZapCooldown -= dt;
+
+            bool blink = invulnerableTimer > 0f && Mathf.Repeat(Time.time * 16f, 1f) > 0.5f;
+            body.color = flashTimer > 0f ? Color.white : Palette.Player;
+            body.enabled = !blink;
+            float pulse = 0.32f + 0.05f * Mathf.Sin(Time.time * 6f);
+            core.transform.localScale = Vector3.one * pulse;
+        }
+
+        void FixedUpdate()
+        {
+            var gm = GameManager.Instance;
+            bool canMove = IsAlive && gm && gm.PlayerCanMove;
+            Vector2 input = canMove ? GameInput.Move : Vector2.zero;
+            rb.linearVelocity = input * data.moveSpeed + knock;
+            knock = Vector2.MoveTowards(knock, Vector2.zero, 40f * Time.fixedDeltaTime);
+        }
+
+        void OnCollisionStay2D(Collision2D c)
+        {
+            var gm = GameManager.Instance;
+            if (!IsAlive || !gm || gm.State != GameState.Combat) return;
+
+            if (c.collider.TryGetComponent(out Enemy enemy) && enemy.IsAlive)
+            {
+                TakeDamage(enemy.ContactDamage, (Position - enemy.Position).normalized * 6f);
+            }
+            else if (c.gameObject.layer == GameLayers.Wall && wallZapCooldown <= 0f)
+            {
+                wallZapCooldown = 0.5f;
+                var push = WallNormal(Position) * data.wallKnockback;
+                FxSystem.Pulse(Position, Palette.Wall, 0.3f, 1.8f, 0.25f);
+                CameraShake.Add(0.25f);
+                TakeDamage(data.wallDamage, push);
+            }
+        }
+
+        static Vector2 WallNormal(Vector2 p)
+        {
+            float dx = Arena.HalfSize.x - Mathf.Abs(p.x);
+            float dy = Arena.HalfSize.y - Mathf.Abs(p.y);
+            return dx < dy ? new Vector2(-Mathf.Sign(p.x), 0f) : new Vector2(0f, -Mathf.Sign(p.y));
+        }
+
+        public void TakeDamage(float amount, Vector2 push)
+        {
+            knock += push;
+            if (invulnerableTimer > 0f || !IsAlive || DevCommandLine.God) return;
+
+            HP = Mathf.Max(0f, HP - amount);
+            invulnerableTimer = data.invulnerableTime;
+            flashTimer = 0.08f;
+            DamagePopups.Show(Position, amount, Palette.Danger, false);
+            CameraShake.Add(0.35f);
+            TimeControl.HitStop();
+
+            if (HP <= 0f)
+            {
+                body.enabled = true;
+                FxSystem.Pulse(Position, Palette.Player, 0.5f, 4f, 0.6f);
+                Died?.Invoke();
+            }
+        }
+    }
+}

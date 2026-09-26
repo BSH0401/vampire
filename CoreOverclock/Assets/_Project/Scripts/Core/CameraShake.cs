@@ -1,0 +1,48 @@
+using UnityEngine;
+
+namespace CoreOverclock
+{
+    /// <summary>
+    /// Fixed single-screen arena camera (기획서 4.2) with trauma-based shake.
+    /// Stand-in for Cinemachine Impulse during the graybox phase.
+    /// </summary>
+    [RequireComponent(typeof(Camera))]
+    public class CameraShake : MonoBehaviour
+    {
+        const float MaxOffset = 0.45f;
+        const float MaxAngle = 1.5f;
+        const float Decay = 1.8f;
+
+        static CameraShake instance;
+        Camera cam;
+        Vector3 basePosition;
+        float trauma;
+
+        public static void Add(float amount)
+        {
+            if (instance) instance.trauma = Mathf.Min(1f, instance.trauma + amount);
+        }
+
+        void Awake()
+        {
+            instance = this;
+            cam = GetComponent<Camera>();
+            basePosition = new Vector3(0f, 0f, -10f);
+        }
+
+        void LateUpdate()
+        {
+            // Keep the whole arena (plus walls) visible for any aspect ratio.
+            // Extra top/bottom margin keeps the HUD off the arena.
+            float halfW = Arena.HalfSize.x + 1f, halfH = Arena.HalfSize.y + 2f;
+            cam.orthographicSize = Mathf.Max(halfH, halfW / Mathf.Max(0.1f, cam.aspect));
+
+            trauma = Mathf.Max(0f, trauma - Decay * Time.unscaledDeltaTime);
+            float s = trauma * trauma;
+            float t = Time.unscaledTime * 30f;
+            var offset = new Vector3(Mathf.PerlinNoise(t, 0.1f) * 2f - 1f, Mathf.PerlinNoise(0.7f, t) * 2f - 1f) * (MaxOffset * s);
+            transform.SetPositionAndRotation(basePosition + offset,
+                Quaternion.Euler(0f, 0f, (Mathf.PerlinNoise(t, t) * 2f - 1f) * MaxAngle * s));
+        }
+    }
+}
