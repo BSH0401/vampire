@@ -95,6 +95,7 @@ namespace CoreOverclock
             colors.selectedColor = new Color(0.2f, 0.55f, 0.65f, 1f);
             colors.pressedColor = new Color(0.3f, 0.9f, 0.9f, 1f);
             btn.colors = colors;
+            btn.onClick.AddListener(() => AudioManager.Play(SfxId.UIClick, 0.4f, 0f));
             btn.onClick.AddListener(onClick);
             Label(Stretch("Label", rt), label, 34, Palette.Text);
             return btn;

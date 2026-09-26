@@ -20,7 +20,7 @@ namespace CoreOverclock
 
         public static void Add(float amount)
         {
-            if (instance) instance.trauma = Mathf.Min(1f, instance.trauma + amount);
+            if (instance && GameSettings.ScreenShake) instance.trauma = Mathf.Min(1f, instance.trauma + amount);
         }
 
         void Awake()

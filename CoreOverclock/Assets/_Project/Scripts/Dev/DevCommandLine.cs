@@ -15,6 +15,7 @@ namespace CoreOverclock
     ///   -scrap N              start with N scrap
     ///   -autobuy              autopilot buys whatever it can afford in the shop
     ///   -novent               autopilot never uses Vent Out
+    ///   -title                stay on the title screen (for screenshots)
     ///   -timescale N          run the simulation N times faster (balance sweeps)
     /// </summary>
     public class DevCommandLine : MonoBehaviour
@@ -22,7 +23,7 @@ namespace CoreOverclock
         public static bool Enabled, Autopilot, God;
         public static float WaveTimeOverride = -1f;
         public static int StartWave = 1, StartScrap;
-        public static bool AutoBuy, NoVent;
+        public static bool AutoBuy, NoVent, ShowTitle;
         public static float TimeScale = 1f;
         static string shotDir;
         static float[] shotTimes = { 5f, 12f };
@@ -33,7 +34,7 @@ namespace CoreOverclock
 
         public static void Parse()
         {
-            Enabled = Autopilot = God = AutoBuy = NoVent = false;
+            Enabled = Autopilot = God = AutoBuy = NoVent = ShowTitle = false;
             StartScrap = 0;
             TimeScale = 1f;
             WaveTimeOverride = -1f;
@@ -52,6 +53,7 @@ namespace CoreOverclock
                     case "-scrap": StartScrap = (int)ParseFloat(next, 0f); break;
                     case "-autobuy": AutoBuy = true; Enabled = true; break;
                     case "-novent": NoVent = true; break;
+                    case "-title": ShowTitle = true; break;
                     case "-timescale": TimeScale = Mathf.Clamp(ParseFloat(next, 1f), 0.1f, 8f); break;
                     case "-wavetime": WaveTimeOverride = ParseFloat(next, -1f); Enabled = true; break;
                     case "-startwave": StartWave = (int)ParseFloat(next, 1f); break;

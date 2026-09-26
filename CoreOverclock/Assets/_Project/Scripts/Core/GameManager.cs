@@ -4,7 +4,7 @@ using UnityEngine.SceneManagement;
 
 namespace CoreOverclock
 {
-    public enum GameState { Combat, Resolving, Intermission, GameOver }
+    public enum GameState { Combat, Resolving, Intermission, GameOver, Title }
 
     /// <summary>
     /// Entry point and wave flow: 아레나 전투 → 결산 → 코어 작업실 → 다음 웨이브 (기획서 3장).
@@ -23,6 +23,9 @@ namespace CoreOverclock
         ScrapSystem scrap;
         HUD hud;
         ShopUI shopUI;
+        TitleScreen title;
+        SettingsPanel settings;
+        static bool skipTitleOnce; // "다시 시작" reloads the scene straight into a run
         DataTower[] towers;
         WaveDefinition currentWave;
         int waveStartFrame;
@@ -40,7 +43,7 @@ namespace CoreOverclock
         public EnemySpawner Spawner { get; private set; }
         public WaveDefinition CurrentWave => currentWave;
         public int Wave { get; private set; }
-        public int TotalWaves => waveTable.Count;
+        public int TotalWaves => BuildFlavor.IsDemo ? Mathf.Min(BuildFlavor.DemoLastWave, waveTable.Count) : waveTable.Count;
         public float TimeLeft { get; private set; }
         public int Scrap { get; private set; }
         public int TotalKills { get; private set; }
@@ -58,6 +61,8 @@ namespace CoreOverclock
             DevCommandLine.Parse();
 
             gameObject.AddComponent<TimeControl>();
+            gameObject.AddComponent<SteamRunner>();
+            AudioManager.Create(gameObject);
             Heat = gameObject.AddComponent<HeatSystem>();
             Heat.StateChanged += OnHeatStateChanged;
             Loadout = new Loadout();
@@ -67,6 +72,7 @@ namespace CoreOverclock
             {
                 cam.backgroundColor = Palette.Background;
                 if (!cam.GetComponent<CameraShake>()) cam.gameObject.AddComponent<CameraShake>();
+                PostFx.Create(cam);
             }
 
             var world = new GameObject("World").transform;
@@ -74,7 +80,11 @@ namespace CoreOverclock
             Player = Player.Create(playerData, world);
             Player.SyncWeapons(Loadout);
             Player.Died += OnPlayerDied;
-            Loadout.Changed += () => Player.SyncWeapons(Loadout);
+            Loadout.Changed += () =>
+            {
+                Player.SyncWeapons(Loadout);
+                if (Loadout.WeaponSlotsFull) Unlock(Achievements.FullArsenal);
+            };
 
             ProjectileSystem.Create(world);
             FxSystem.Create(world);
@@ -88,6 +98,9 @@ namespace CoreOverclock
             DamagePopups.Create(hud.Canvas);
             Shop = new Shop(shopDatabase, Loadout, this);
             shopUI = ShopUI.Create(hud.Canvas, this, Shop, Loadout);
+            settings = SettingsPanel.Create(hud.Canvas);
+            title = TitleScreen.Create(hud.Canvas, this, settings);
+            hud.SetSettingsPanel(settings);
             Scrap += DevCommandLine.StartScrap;
 
             if (DevCommandLine.Enabled) gameObject.AddComponent<DevCommandLine>();
@@ -98,12 +111,33 @@ namespace CoreOverclock
             if (Instance == this) Instance = null;
         }
 
-        void Start() => StartWave(Mathf.Clamp(DevCommandLine.StartWave, 1, TotalWaves));
+        void Start()
+        {
+            if ((DevCommandLine.Enabled && !DevCommandLine.ShowTitle) || skipTitleOnce)
+            {
+                skipTitleOnce = false;
+                StartGame(Mathf.Clamp(DevCommandLine.StartWave, 1, TotalWaves));
+                return;
+            }
+            State = GameState.Title;
+            AudioManager.Prewarm();
+            AudioManager.PlayMusic(MusicId.Title);
+            title.Show();
+        }
+
+        public void StartGame() => StartGame(1);
+
+        void StartGame(int wave)
+        {
+            title.Hide();
+            StartWave(wave);
+        }
 
         void Update()
         {
-            if (GameInput.PausePressed && (State == GameState.Combat || TimeControl.Paused))
+            if (GameInput.PausePressed && !settings.IsOpen && (State == GameState.Combat || TimeControl.Paused))
                 SetPaused(!TimeControl.Paused);
+            AudioManager.Muffled = TimeControl.Paused || (State == GameState.Combat && Heat.State == HeatState.Meltdown);
 
             if (State != GameState.Combat || TimeControl.Paused) return;
             TimeLeft -= Time.deltaTime;
@@ -129,6 +163,7 @@ namespace CoreOverclock
             shopUI.Hide();
             State = GameState.Combat;
             Spawner.Begin(def);
+            AudioManager.PlayMusic(def.bosses.Count > 0 ? MusicId.Boss : MusicId.Combat);
 
             bool boss = def.bosses.Count > 0;
             hud.ShowBanner(boss ? $"WAVE {wave} · 보스 출현" : $"WAVE {wave}", boss ? Palette.Danger : Palette.Player);
@@ -159,6 +194,8 @@ namespace CoreOverclock
             scrap.CollectAll();
             CameraShake.Add(0.3f);
             hud.ShowBanner("WAVE CLEAR", Palette.Scrap);
+            AudioManager.Play(SfxId.WaveClear, 0.6f, 0f);
+            if (Wave == 1) Unlock(Achievements.FirstWave);
             StartCoroutine(ResolveRoutine());
         }
 
@@ -175,6 +212,9 @@ namespace CoreOverclock
             if (Wave >= TotalWaves)
             {
                 State = GameState.GameOver;
+                Unlock(BuildFlavor.IsDemo ? Achievements.DemoClear : Achievements.Escape);
+                AudioManager.PlayMusic(MusicId.None);
+                AudioManager.Play(SfxId.Victory, 0.8f, 0f);
                 hud.ShowGameOver(true, Wave, TotalKills, Scrap);
                 yield break;
             }
@@ -185,6 +225,7 @@ namespace CoreOverclock
 
             // 코어 작업실
             State = GameState.Intermission;
+            AudioManager.PlayMusic(MusicId.Shop);
             Shop.Open(Wave + 1);
             shopUI.Show(Wave, waveKills, Scrap - waveScrapStart, bonus);
         }
@@ -204,6 +245,8 @@ namespace CoreOverclock
             EnemyProjectileSystem.ClearAll();
             foreach (var e in Enemy.Active.ToArray()) e.FreezeAndDissolve(Random.Range(0.3f, 1f));
             hud.ShowBanner("CORE DESTROYED", Palette.Danger, 2f);
+            AudioManager.PlayMusic(MusicId.None);
+            AudioManager.Play(SfxId.GameOver, 0.8f, 0f);
             StartCoroutine(GameOverRoutine());
         }
 
@@ -222,8 +265,25 @@ namespace CoreOverclock
 
         public void Restart()
         {
+            skipTitleOnce = true;
+            ReloadScene();
+        }
+
+        public void ReturnToTitle()
+        {
+            skipTitleOnce = false;
+            ReloadScene();
+        }
+
+        static void ReloadScene()
+        {
             TimeControl.SetPaused(false);
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        }
+
+        void Unlock(string achievement)
+        {
+            if (SteamService.Unlock(achievement)) hud.ShowToast($"업적 달성 · {SteamService.DisplayName(achievement)}");
         }
 
         public void RegisterKill(Enemy enemy)
@@ -234,6 +294,9 @@ namespace CoreOverclock
 
             CameraShake.Add(0.8f);
             FxSystem.Pulse(enemy.Position, enemy.Data.color, 0.5f, 14f, 0.8f);
+            AudioManager.Play(SfxId.Explosion, 1f, 0f);
+            if (enemy.Data.id == "juggernaut") Unlock(Achievements.Juggernaut);
+            else if (enemy.Data.id == "overseer") Unlock(Achievements.Overseer);
             hud.ShowBanner($"{enemy.Data.displayName} 격파!", Palette.Scrap, 2f);
             // Wave 20: destroying the boss core ends the run early (기획서 4.3).
             if (currentWave.endOnBossKill && Boss == null) EndWave();
@@ -278,8 +341,14 @@ namespace CoreOverclock
             {
                 lastOverclockBanner = Time.time;
                 hud.ShowBanner("OVERCLOCK", Palette.Overclock, 1f);
+                AudioManager.Play(SfxId.Overclock, 0.5f, 0f);
             }
-            else if (s == HeatState.Meltdown) hud.ShowBanner("MELTDOWN", Palette.Danger, 1.5f);
+            else if (s == HeatState.Meltdown)
+            {
+                hud.ShowBanner("MELTDOWN", Palette.Danger, 1.5f);
+                AudioManager.Play(SfxId.Meltdown, 0.7f, 0f);
+                Unlock(Achievements.FirstMeltdown);
+            }
         }
     }
 }

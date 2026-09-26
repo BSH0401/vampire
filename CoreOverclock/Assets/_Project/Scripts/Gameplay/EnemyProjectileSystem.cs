@@ -51,6 +51,7 @@ namespace CoreOverclock
             var ring = t.GetChild(1).GetComponent<SpriteRenderer>();
             glow.color = new Color(color.r, color.g, color.b, 0.4f);
             ring.color = color;
+            AudioManager.Play(SfxId.EnemyShoot, 0.15f, 0.1f);
             instance.active.Add(new Bullet
             {
                 Transform = t, Ring = ring, Glow = glow, Position = position, Velocity = velocity,

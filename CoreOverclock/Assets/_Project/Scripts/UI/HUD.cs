@@ -18,7 +18,10 @@ namespace CoreOverclock
         GameObject gameOverPanel, pausePanel;
         Text gameOverTitle, gameOverStats;
         Button restartButton, resumeButton;
-        float bannerTimer;
+        float bannerTimer, toastTimer;
+        RectTransform gameplayRoot;
+        Text toast;
+        SettingsPanel settings;
 
         public Canvas Canvas { get; private set; }
 
@@ -35,7 +38,9 @@ namespace CoreOverclock
 
         void Build()
         {
-            var root = Canvas.transform;
+            // Gameplay widgets live under one container so the title screen can hide them together.
+            gameplayRoot = UIFactory.Stretch("Gameplay", Canvas.transform);
+            var root = (Transform)gameplayRoot;
             Vector2 top = new(0.5f, 1f), topLeft = new(0f, 1f), topRight = new(1f, 1f), bottom = new(0.5f, 0f);
 
             waveLabel = UIFactory.Label(UIFactory.Rect("Wave", root, topRight, topRight, new Vector2(-32f, -32f), new Vector2(420f, 40f)),
@@ -61,14 +66,20 @@ namespace CoreOverclock
             BuildBossBar(root, top);
 
             gameOverPanel = BuildPanel("GameOverPanel", out gameOverTitle, out gameOverStats);
-            restartButton = UIFactory.Button(gameOverPanel.transform, "다시 시작", new Vector2(0f, -170f), new Vector2(420f, 80f), gm.Restart);
+            restartButton = UIFactory.Button(gameOverPanel.transform, "다시 시작", new Vector2(-220f, -170f), new Vector2(400f, 80f), gm.Restart);
+            UIFactory.Button(gameOverPanel.transform, "타이틀로", new Vector2(220f, -170f), new Vector2(400f, 80f), gm.ReturnToTitle);
 
             pausePanel = BuildPanel("PausePanel", out var pauseTitle, out var pauseStats);
             pauseTitle.text = "일시정지";
             pauseStats.text = "<size=24>이동: WASD / 방향키 / 좌스틱\n긴급 방열: Space / 우클릭 / A·RB\n일시정지: ESC / Start</size>";
             pauseStats.rectTransform.anchoredPosition = new Vector2(0f, -120f);
             resumeButton = UIFactory.Button(pausePanel.transform, "계속하기", new Vector2(0f, -40f), new Vector2(420f, 80f), () => gm.SetPaused(false));
-            UIFactory.Button(pausePanel.transform, "처음부터", new Vector2(0f, -140f), new Vector2(420f, 80f), gm.Restart);
+            UIFactory.Button(pausePanel.transform, "설정", new Vector2(0f, -130f), new Vector2(420f, 72f),
+                () => settings.Open(() => pausePanel.SetActive(false), () => Show(pausePanel, resumeButton)));
+            UIFactory.Button(pausePanel.transform, "타이틀로", new Vector2(0f, -215f), new Vector2(420f, 72f), gm.ReturnToTitle);
+
+            toast = UIFactory.Label(UIFactory.Rect("Toast", root, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-32f, -80f), new Vector2(700f, 44f)),
+                "", 28, Palette.Scrap, TextAnchor.MiddleRight);
         }
 
         void BuildBossBar(Transform root, Vector2 top)
@@ -125,6 +136,9 @@ namespace CoreOverclock
         void Update()
         {
             if (!gm || !gm.Player) return;
+            bool inGame = gm.State != GameState.Title;
+            if (gameplayRoot.gameObject.activeSelf != inGame) gameplayRoot.gameObject.SetActive(inGame);
+            if (!inGame) return;
 
             waveLabel.text = $"WAVE {gm.Wave} / {gm.TotalWaves}";
             int seconds = Mathf.CeilToInt(Mathf.Max(0f, gm.TimeLeft));
@@ -149,6 +163,11 @@ namespace CoreOverclock
                 bossFill.anchorMax = new Vector2(r, 1f);
                 bossLabel.text = $"{boss.Data.displayName}   {Mathf.CeilToInt(r * 100f)}%";
             }
+
+            toastTimer -= Time.unscaledDeltaTime;
+            var tc = toast.color;
+            tc.a = Mathf.Clamp01(toastTimer / 0.5f);
+            toast.color = tc;
 
             if (bannerTimer > 0f)
             {
@@ -189,6 +208,15 @@ namespace CoreOverclock
             ventFillImage.color = heat.VentReady ? new Color(0.3f, 0.9f, 1f, 0.6f) : new Color(0.3f, 0.6f, 0.8f, 0.35f);
         }
 
+        public void SetSettingsPanel(SettingsPanel panel) => settings = panel;
+
+        /// <summary>Small notification under the wave label (achievements).</summary>
+        public void ShowToast(string text)
+        {
+            toast.text = text;
+            toastTimer = 3f;
+        }
+
         public void ShowBanner(string text, Color color, float duration = 1.6f)
         {
             banner.text = text;
@@ -198,9 +226,11 @@ namespace CoreOverclock
 
         public void ShowGameOver(bool victory, int wave, int kills, int totalScrap)
         {
-            gameOverTitle.text = victory ? "탈출 성공!" : "코어 파괴";
+            bool demoEnd = victory && BuildFlavor.IsDemo;
+            gameOverTitle.text = demoEnd ? "데모 클리어!" : victory ? "탈출 성공!" : "코어 파괴";
             gameOverTitle.color = victory ? Palette.Scrap : Palette.Danger;
-            gameOverStats.text = $"도달 웨이브: {wave}\n총 처치: {kills}\n보유 스크랩: ◆ {totalScrap}";
+            gameOverStats.text = $"도달 웨이브: {wave}\n총 처치: {kills}\n보유 스크랩: ◆ {totalScrap}" +
+                (demoEnd ? "\n<size=24><color=#FF9A3C>웨이브 11~20과 최종 보스는 정식판에서!\nSteam 위시리스트에 추가해 주세요.</color></size>" : "");
             Show(gameOverPanel, restartButton);
         }
 

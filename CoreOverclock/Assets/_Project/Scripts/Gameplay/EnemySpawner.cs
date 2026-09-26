@@ -102,6 +102,7 @@ namespace CoreOverclock
         IEnumerator SpawnRoutine(EnemyData data, Vector2 position, bool boss)
         {
             pending++;
+            if (boss) AudioManager.Play(SfxId.BossSpawn, 0.9f, 0f);
             var marker = markerPool.Get();
             marker.transform.position = position;
             marker.transform.localScale = Vector3.one * (boss ? 2.5f : 0.6f);
