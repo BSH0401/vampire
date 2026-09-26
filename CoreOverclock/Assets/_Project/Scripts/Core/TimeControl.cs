@@ -14,11 +14,12 @@ namespace CoreOverclock
         float lastHitStop = -10f;
 
         public static bool Paused => instance && instance.paused;
+        static float BaseScale => DevCommandLine.TimeScale;
 
         void Awake()
         {
             instance = this;
-            Time.timeScale = 1f;
+            Time.timeScale = BaseScale;
         }
 
         void OnDestroy()
@@ -34,7 +35,7 @@ namespace CoreOverclock
             if (now - instance.lastHitStop < HitStopCooldown) return;
             instance.lastHitStop = now;
             instance.hitStopUntil = now + duration;
-            Time.timeScale = HitStopScale;
+            Time.timeScale = HitStopScale * BaseScale;
         }
 
         public static void SetPaused(bool value)
@@ -42,14 +43,14 @@ namespace CoreOverclock
             if (!instance) return;
             instance.paused = value;
             instance.hitStopUntil = 0f;
-            Time.timeScale = value ? 0f : 1f;
+            Time.timeScale = value ? 0f : BaseScale;
         }
 
         void Update()
         {
             if (paused || hitStopUntil <= 0f || Time.unscaledTime < hitStopUntil) return;
             hitStopUntil = 0f;
-            Time.timeScale = 1f;
+            Time.timeScale = BaseScale;
         }
     }
 }

@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13e257be98a765948b86f7b721054ec6, type: 3}
+  m_Name: B_LegionCore
+  m_EditorClassIdentifier: Assembly-CSharp::CoreOverclock.EnemyData
+  id: legion_core
+  displayName: "\uC2A4\uD06C\uB7A9 \uB808\uAE30\uC628 \uCF54\uC5B4"
+  shape: 4
+  behaviour: 6
+  color: {r: 1, g: 0.25, b: 0.25, a: 1}
+  scale: 3.2
+  maxHP: 1300
+  moveSpeed: 1.4
+  contactDamage: 8
+  knockbackResistance: 1
+  scrapDrop: 80
+  isBoss: 1
+  attackRange: 5.5
+  windupTime: 1.1
+  chargeSpeed: 13
+  chargeDuration: 0.7
+  recoverTime: 0.8
+  preferredDistance: 6.5
+  attackInterval: 3
+  projectileSpeed: 5.5
+  projectileDamage: 5
+  fuseTime: 1.2
+  triggerRange: 1.8
+  explosionRadius: 2.2
+  explosionDamage: 8
+  explosionEnemyDamage: 40
+  shieldRadius: 4
+  summon: {fileID: 11400000, guid: 9a915e36a61b8d74aaf52dbd3af491df, type: 2}

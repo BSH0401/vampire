@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1b65cb761e06bab41b4c18335d1f7b40, type: 3}
+  m_Name: C_RepairBot
+  m_EditorClassIdentifier: Assembly-CSharp::CoreOverclock.ChipData
+  id: repair_bot
+  displayName: "\uB098\uB178 \uC218\uB9AC\uBD07"
+  description: "\uC804\uD22C \uC911 \uCCB4\uB825\uC744 \uC11C\uC11C\uD788 \uD68C\uBCF5."
+  tier: 1
+  price: 20
+  modifiers:
+  - stat: 8
+    value: 0.4

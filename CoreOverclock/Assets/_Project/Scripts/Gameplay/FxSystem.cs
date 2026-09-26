@@ -32,6 +32,8 @@ namespace CoreOverclock
         {
             if (!instance) return;
             var sr = instance.pool.Get();
+            // Large pulses use a thin ring so the stroke doesn't balloon with scale.
+            sr.sprite = toScale > 3f ? ShapeSprites.ThinRing : ShapeSprites.Ring;
             sr.transform.position = position;
             sr.transform.localScale = Vector3.one * fromScale;
             sr.color = color;

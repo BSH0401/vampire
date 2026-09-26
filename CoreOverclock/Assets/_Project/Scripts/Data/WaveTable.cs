@@ -19,7 +19,11 @@ namespace CoreOverclock
         [Min(1)] public int spawnPerTick = 1;
         public float hpMultiplier = 1f;
         public float speedMultiplier = 1f;
+        [Range(0f, 1f), Tooltip("Chance for each point of an enemy's scrap to drop (bosses always drop in full)")]
+        public float scrapDropChance = 1f;
         public List<WaveSpawnEntry> enemies = new();
+        [Tooltip("Spawned once at wave start")] public List<EnemyData> bosses = new();
+        [Tooltip("Wave also ends (cleared) when every boss is destroyed")] public bool endOnBossKill;
 
         public EnemyData PickEnemy()
         {

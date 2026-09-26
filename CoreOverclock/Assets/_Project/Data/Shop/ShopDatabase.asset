@@ -16,16 +16,42 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 02607d97dbbf9e345b8e7498fcef0cbf, type: 2}
   - {fileID: 11400000, guid: 109da1fdc4483b7498d209e482832daf, type: 2}
   - {fileID: 11400000, guid: 4f5f44ca8ea6d1444ad2fa0b690ffce4, type: 2}
+  - {fileID: 11400000, guid: 286fd2a5460930442a78abc22676f1cf, type: 2}
+  - {fileID: 11400000, guid: 8eb089c4c4cd06f4dae16946c3144516, type: 2}
   - {fileID: 11400000, guid: fc899e92acb86f547b5e81e0ab8527a3, type: 2}
+  - {fileID: 11400000, guid: dfa10379b9fa2f642896e1c6819541b3, type: 2}
+  - {fileID: 11400000, guid: a1458cc66bc0cec4bac132c830f64106, type: 2}
+  - {fileID: 11400000, guid: 1372ed808da25ca488a02cb42773993b, type: 2}
   - {fileID: 11400000, guid: 54da01485c53ce34c813637dfec7915a, type: 2}
+  - {fileID: 11400000, guid: 4a774cef5cf8a904c8c10aaedc81c68c, type: 2}
+  - {fileID: 11400000, guid: da968079e0f242349bd7eec92c7c92d3, type: 2}
   - {fileID: 11400000, guid: d8d37b1c45e031944947fceaa9ddb890, type: 2}
+  - {fileID: 11400000, guid: e0056c63b839fff43bbe0db3cc3cc11d, type: 2}
+  - {fileID: 11400000, guid: 35db6dfe0fbdbea40958d3201536a3d8, type: 2}
   chips:
   - {fileID: 11400000, guid: 1f33bbfab95f70742b51be5b9639dc15, type: 2}
   - {fileID: 11400000, guid: 7b680160fda0a6b4da19bf864de03f14, type: 2}
   - {fileID: 11400000, guid: 26dfd520d9d251f4d95f43e16d9e951d, type: 2}
   - {fileID: 11400000, guid: 609d7cd012a692542be5b77b4c9321e8, type: 2}
   - {fileID: 11400000, guid: ed15c331b0fa3a249b07687d067445e4, type: 2}
-  - {fileID: 11400000, guid: 3666b4e9142641d438a9e9b3a86b9617, type: 2}
   - {fileID: 11400000, guid: 8d6a910b3fa4ac44992f56b5490fdfb0, type: 2}
   - {fileID: 11400000, guid: 51cbf32c64b7f5a469822553773da4a6, type: 2}
+  - {fileID: 11400000, guid: 1ea7f12bb1185cd4bbc6373cdb17ba59, type: 2}
+  - {fileID: 11400000, guid: b05495d075602a941b657ab276c82e90, type: 2}
+  - {fileID: 11400000, guid: 5b12b83e229d6f34abe1bdfdfe35d262, type: 2}
+  - {fileID: 11400000, guid: 63fa5accbe2e45740b7c5c1acae8e356, type: 2}
+  - {fileID: 11400000, guid: d865ce8957c0be340a9ae33503c3f0cc, type: 2}
+  - {fileID: 11400000, guid: d781f814164607547a05d841a6cbdd51, type: 2}
+  - {fileID: 11400000, guid: 3666b4e9142641d438a9e9b3a86b9617, type: 2}
+  - {fileID: 11400000, guid: 6a907f187fdf0e1478978a4048dd820e, type: 2}
+  - {fileID: 11400000, guid: 4417ccac701834a47a957b02f85a9bc8, type: 2}
+  - {fileID: 11400000, guid: 29436ebc704ef88428b8b7e0ccc79d26, type: 2}
+  - {fileID: 11400000, guid: b267612871763e94581238d11ad94756, type: 2}
+  - {fileID: 11400000, guid: 46e13a9408a784d498e54cb33d2a86ae, type: 2}
+  - {fileID: 11400000, guid: 0076fe3e830a9db4ca1d8035f3bf8123, type: 2}
+  - {fileID: 11400000, guid: fe5e4ec9c01763547a0186de19333177, type: 2}
+  - {fileID: 11400000, guid: acff8f6e4daf94c47b87011a07085095, type: 2}
+  - {fileID: 11400000, guid: 5051f2168bfc266498dd553a86163211, type: 2}
+  - {fileID: 11400000, guid: dcac8196531215149bc59ebbd0a5d403, type: 2}
+  - {fileID: 11400000, guid: 26dec2ce340abee4c8cc5ec56862d593, type: 2}
   weaponChance: 0.6

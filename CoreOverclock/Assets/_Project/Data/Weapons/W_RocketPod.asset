@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 946a8ab372925704eb9ebd79c4590260, type: 3}
+  m_Name: W_RocketPod
+  m_EditorClassIdentifier: Assembly-CSharp::CoreOverclock.WeaponData
+  id: rocket_pod
+  displayName: "\uB85C\uCF13 \uD3EC\uB4DC"
+  description: "\uC18C\uD615 \uB85C\uCF13 \uB450 \uBC1C\uC744 \uC5F0\uC18D \uBC1C\uC0AC."
+  tag: 3
+  tier: 2
+  price: 36
+  damage: 11
+  fireInterval: 0.9
+  range: 8
+  projectileCount: 2
+  spreadAngle: 8
+  pierce: 0
+  knockback: 4
+  critChance: 0.06
+  critMultiplier: 2
+  projectileSpeed: 16
+  projectileRadius: 0.14
+  projectileLifetime: 0.6
+  projectileColor: {r: 1, g: 0.6, b: 0.3, a: 1}
+  heatPerShot: 4.5
+  slowAmount: 0
+  slowDuration: 1.5
+  burnDamagePerSecond: 0
+  burnDuration: 2
+  explosionRadius: 1.3

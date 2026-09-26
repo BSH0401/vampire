@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13e257be98a765948b86f7b721054ec6, type: 3}
+  m_Name: B_Overseer
+  m_EditorClassIdentifier: Assembly-CSharp::CoreOverclock.EnemyData
+  id: overseer
+  displayName: "\uC624\uBC84\uC2DC\uC5B4"
+  shape: 2
+  behaviour: 5
+  color: {r: 1, g: 0.3, b: 0.8, a: 1}
+  scale: 2.8
+  maxHP: 600
+  moveSpeed: 1.6
+  contactDamage: 6
+  knockbackResistance: 1
+  scrapDrop: 40
+  isBoss: 1
+  attackRange: 5.5
+  windupTime: 1
+  chargeSpeed: 11
+  chargeDuration: 0.55
+  recoverTime: 0.8
+  preferredDistance: 6.5
+  attackInterval: 3
+  projectileSpeed: 5.5
+  projectileDamage: 4
+  fuseTime: 1.2
+  triggerRange: 1.8
+  explosionRadius: 2.2
+  explosionDamage: 8
+  explosionEnemyDamage: 40
+  shieldRadius: 4
+  summon: {fileID: 0}

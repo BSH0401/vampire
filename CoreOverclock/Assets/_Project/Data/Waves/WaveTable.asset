@@ -18,158 +18,343 @@ MonoBehaviour:
     spawnPerTick: 1
     hpMultiplier: 1
     speedMultiplier: 1
+    scrapDropChance: 1
     enemies:
     - enemy: {fileID: 11400000, guid: 9a915e36a61b8d74aaf52dbd3af491df, type: 2}
       weight: 1
+    bosses: []
+    endOnBossKill: 0
   - duration: 30
     spawnInterval: 0.965
     spawnPerTick: 1
-    hpMultiplier: 1.25
-    speedMultiplier: 1.02
+    hpMultiplier: 1.192
+    speedMultiplier: 1.015
+    scrapDropChance: 0.96
     enemies:
     - enemy: {fileID: 11400000, guid: 9a915e36a61b8d74aaf52dbd3af491df, type: 2}
       weight: 1
+    bosses: []
+    endOnBossKill: 0
   - duration: 30
     spawnInterval: 0.93
     spawnPerTick: 2
-    hpMultiplier: 1.5
-    speedMultiplier: 1.04
+    hpMultiplier: 1.408
+    speedMultiplier: 1.03
+    scrapDropChance: 0.92
     enemies:
     - enemy: {fileID: 11400000, guid: 9a915e36a61b8d74aaf52dbd3af491df, type: 2}
       weight: 1
+    - enemy: {fileID: 11400000, guid: c13c541c50758cc4abfd3fd95d3e829f, type: 2}
+      weight: 0.2
+    bosses: []
+    endOnBossKill: 0
   - duration: 30
     spawnInterval: 0.895
     spawnPerTick: 2
-    hpMultiplier: 1.75
-    speedMultiplier: 1.06
+    hpMultiplier: 1.648
+    speedMultiplier: 1.045
+    scrapDropChance: 0.88
     enemies:
     - enemy: {fileID: 11400000, guid: 9a915e36a61b8d74aaf52dbd3af491df, type: 2}
       weight: 1
-  - duration: 30
+    - enemy: {fileID: 11400000, guid: c13c541c50758cc4abfd3fd95d3e829f, type: 2}
+      weight: 0.24000001
+    - enemy: {fileID: 11400000, guid: f7b0abfb36e9bac47b51743713fa9ade, type: 2}
+      weight: 0.15
+    bosses: []
+    endOnBossKill: 0
+  - duration: 40
     spawnInterval: 0.86
     spawnPerTick: 2
-    hpMultiplier: 2
-    speedMultiplier: 1.08
+    hpMultiplier: 1.9120001
+    speedMultiplier: 1.06
+    scrapDropChance: 0.84000003
     enemies:
     - enemy: {fileID: 11400000, guid: 9a915e36a61b8d74aaf52dbd3af491df, type: 2}
       weight: 1
+    - enemy: {fileID: 11400000, guid: c13c541c50758cc4abfd3fd95d3e829f, type: 2}
+      weight: 0.28
+    - enemy: {fileID: 11400000, guid: f7b0abfb36e9bac47b51743713fa9ade, type: 2}
+      weight: 0.18
+    bosses:
+    - {fileID: 11400000, guid: 29d59eb30f674b541b18088d9f967db4, type: 2}
+    endOnBossKill: 0
   - duration: 45
     spawnInterval: 0.825
     spawnPerTick: 3
-    hpMultiplier: 2.25
-    speedMultiplier: 1.1
+    hpMultiplier: 2.2
+    speedMultiplier: 1.075
+    scrapDropChance: 0.8
     enemies:
     - enemy: {fileID: 11400000, guid: 9a915e36a61b8d74aaf52dbd3af491df, type: 2}
       weight: 1
+    - enemy: {fileID: 11400000, guid: c13c541c50758cc4abfd3fd95d3e829f, type: 2}
+      weight: 0.32
+    - enemy: {fileID: 11400000, guid: f7b0abfb36e9bac47b51743713fa9ade, type: 2}
+      weight: 0.21000001
+    - enemy: {fileID: 11400000, guid: e4f98b8df5c83374eb56f874138b080b, type: 2}
+      weight: 0.2
+    bosses: []
+    endOnBossKill: 0
   - duration: 45
     spawnInterval: 0.79
     spawnPerTick: 3
-    hpMultiplier: 2.5
-    speedMultiplier: 1.12
+    hpMultiplier: 2.512
+    speedMultiplier: 1.09
+    scrapDropChance: 0.76
     enemies:
     - enemy: {fileID: 11400000, guid: 9a915e36a61b8d74aaf52dbd3af491df, type: 2}
       weight: 1
+    - enemy: {fileID: 11400000, guid: c13c541c50758cc4abfd3fd95d3e829f, type: 2}
+      weight: 0.36
+    - enemy: {fileID: 11400000, guid: f7b0abfb36e9bac47b51743713fa9ade, type: 2}
+      weight: 0.24000001
+    - enemy: {fileID: 11400000, guid: e4f98b8df5c83374eb56f874138b080b, type: 2}
+      weight: 0.23
+    bosses: []
+    endOnBossKill: 0
   - duration: 45
     spawnInterval: 0.755
     spawnPerTick: 3
-    hpMultiplier: 2.75
-    speedMultiplier: 1.14
+    hpMultiplier: 2.848
+    speedMultiplier: 1.105
+    scrapDropChance: 0.72
     enemies:
     - enemy: {fileID: 11400000, guid: 9a915e36a61b8d74aaf52dbd3af491df, type: 2}
       weight: 1
+    - enemy: {fileID: 11400000, guid: c13c541c50758cc4abfd3fd95d3e829f, type: 2}
+      weight: 0.4
+    - enemy: {fileID: 11400000, guid: f7b0abfb36e9bac47b51743713fa9ade, type: 2}
+      weight: 0.27
+    - enemy: {fileID: 11400000, guid: e4f98b8df5c83374eb56f874138b080b, type: 2}
+      weight: 0.26
+    bosses: []
+    endOnBossKill: 0
   - duration: 45
     spawnInterval: 0.72
     spawnPerTick: 4
-    hpMultiplier: 3
-    speedMultiplier: 1.16
+    hpMultiplier: 3.2080002
+    speedMultiplier: 1.12
+    scrapDropChance: 0.68
     enemies:
     - enemy: {fileID: 11400000, guid: 9a915e36a61b8d74aaf52dbd3af491df, type: 2}
       weight: 1
+    - enemy: {fileID: 11400000, guid: c13c541c50758cc4abfd3fd95d3e829f, type: 2}
+      weight: 0.44
+    - enemy: {fileID: 11400000, guid: f7b0abfb36e9bac47b51743713fa9ade, type: 2}
+      weight: 0.3
+    - enemy: {fileID: 11400000, guid: e4f98b8df5c83374eb56f874138b080b, type: 2}
+      weight: 0.29
+    bosses: []
+    endOnBossKill: 0
   - duration: 45
     spawnInterval: 0.685
     spawnPerTick: 4
-    hpMultiplier: 3.25
-    speedMultiplier: 1.18
+    hpMultiplier: 3.592
+    speedMultiplier: 1.135
+    scrapDropChance: 0.64
     enemies:
     - enemy: {fileID: 11400000, guid: 9a915e36a61b8d74aaf52dbd3af491df, type: 2}
       weight: 1
+    - enemy: {fileID: 11400000, guid: c13c541c50758cc4abfd3fd95d3e829f, type: 2}
+      weight: 0.48
+    - enemy: {fileID: 11400000, guid: f7b0abfb36e9bac47b51743713fa9ade, type: 2}
+      weight: 0.33
+    - enemy: {fileID: 11400000, guid: e4f98b8df5c83374eb56f874138b080b, type: 2}
+      weight: 0.32
+    - enemy: {fileID: 11400000, guid: cab4d2f91438ae448860de1de29dc9f1, type: 2}
+      weight: 0.04
+    bosses: []
+    endOnBossKill: 0
   - duration: 45
     spawnInterval: 0.65
     spawnPerTick: 4
-    hpMultiplier: 3.5
-    speedMultiplier: 1.2
+    hpMultiplier: 4
+    speedMultiplier: 1.15
+    scrapDropChance: 0.6
     enemies:
     - enemy: {fileID: 11400000, guid: 9a915e36a61b8d74aaf52dbd3af491df, type: 2}
       weight: 1
+    - enemy: {fileID: 11400000, guid: c13c541c50758cc4abfd3fd95d3e829f, type: 2}
+      weight: 0.5
+    - enemy: {fileID: 11400000, guid: f7b0abfb36e9bac47b51743713fa9ade, type: 2}
+      weight: 0.36
+    - enemy: {fileID: 11400000, guid: e4f98b8df5c83374eb56f874138b080b, type: 2}
+      weight: 0.35
+    - enemy: {fileID: 11400000, guid: cab4d2f91438ae448860de1de29dc9f1, type: 2}
+      weight: 0.049999997
+    bosses: []
+    endOnBossKill: 0
   - duration: 45
     spawnInterval: 0.615
     spawnPerTick: 5
-    hpMultiplier: 3.75
-    speedMultiplier: 1.22
+    hpMultiplier: 4.432
+    speedMultiplier: 1.165
+    scrapDropChance: 0.56
     enemies:
     - enemy: {fileID: 11400000, guid: 9a915e36a61b8d74aaf52dbd3af491df, type: 2}
       weight: 1
+    - enemy: {fileID: 11400000, guid: c13c541c50758cc4abfd3fd95d3e829f, type: 2}
+      weight: 0.5
+    - enemy: {fileID: 11400000, guid: f7b0abfb36e9bac47b51743713fa9ade, type: 2}
+      weight: 0.39
+    - enemy: {fileID: 11400000, guid: e4f98b8df5c83374eb56f874138b080b, type: 2}
+      weight: 0.38
+    - enemy: {fileID: 11400000, guid: cab4d2f91438ae448860de1de29dc9f1, type: 2}
+      weight: 0.06
+    bosses: []
+    endOnBossKill: 0
   - duration: 45
     spawnInterval: 0.58
     spawnPerTick: 5
-    hpMultiplier: 4
-    speedMultiplier: 1.24
+    hpMultiplier: 4.888
+    speedMultiplier: 1.18
+    scrapDropChance: 0.52
     enemies:
     - enemy: {fileID: 11400000, guid: 9a915e36a61b8d74aaf52dbd3af491df, type: 2}
       weight: 1
+    - enemy: {fileID: 11400000, guid: c13c541c50758cc4abfd3fd95d3e829f, type: 2}
+      weight: 0.5
+    - enemy: {fileID: 11400000, guid: f7b0abfb36e9bac47b51743713fa9ade, type: 2}
+      weight: 0.42
+    - enemy: {fileID: 11400000, guid: e4f98b8df5c83374eb56f874138b080b, type: 2}
+      weight: 0.41
+    - enemy: {fileID: 11400000, guid: cab4d2f91438ae448860de1de29dc9f1, type: 2}
+      weight: 0.07
+    bosses: []
+    endOnBossKill: 0
   - duration: 45
     spawnInterval: 0.545
     spawnPerTick: 5
-    hpMultiplier: 4.25
-    speedMultiplier: 1.26
+    hpMultiplier: 5.368
+    speedMultiplier: 1.195
+    scrapDropChance: 0.48000002
     enemies:
     - enemy: {fileID: 11400000, guid: 9a915e36a61b8d74aaf52dbd3af491df, type: 2}
       weight: 1
+    - enemy: {fileID: 11400000, guid: c13c541c50758cc4abfd3fd95d3e829f, type: 2}
+      weight: 0.5
+    - enemy: {fileID: 11400000, guid: f7b0abfb36e9bac47b51743713fa9ade, type: 2}
+      weight: 0.45
+    - enemy: {fileID: 11400000, guid: e4f98b8df5c83374eb56f874138b080b, type: 2}
+      weight: 0.44
+    - enemy: {fileID: 11400000, guid: cab4d2f91438ae448860de1de29dc9f1, type: 2}
+      weight: 0.08
+    bosses: []
+    endOnBossKill: 0
   - duration: 60
-    spawnInterval: 0.51
+    spawnInterval: 1.122
     spawnPerTick: 6
-    hpMultiplier: 4.5
-    speedMultiplier: 1.28
+    hpMultiplier: 5.872
+    speedMultiplier: 1.21
+    scrapDropChance: 0.44
     enemies:
     - enemy: {fileID: 11400000, guid: 9a915e36a61b8d74aaf52dbd3af491df, type: 2}
       weight: 1
+    - enemy: {fileID: 11400000, guid: c13c541c50758cc4abfd3fd95d3e829f, type: 2}
+      weight: 0.5
+    - enemy: {fileID: 11400000, guid: f7b0abfb36e9bac47b51743713fa9ade, type: 2}
+      weight: 0.45
+    - enemy: {fileID: 11400000, guid: e4f98b8df5c83374eb56f874138b080b, type: 2}
+      weight: 0.45
+    - enemy: {fileID: 11400000, guid: cab4d2f91438ae448860de1de29dc9f1, type: 2}
+      weight: 0.089999996
+    bosses:
+    - {fileID: 11400000, guid: 90a332922fd713a499a6eca0857632c3, type: 2}
+    endOnBossKill: 0
   - duration: 45
     spawnInterval: 0.475
-    spawnPerTick: 6
-    hpMultiplier: 4.75
-    speedMultiplier: 1.3
+    spawnPerTick: 8
+    hpMultiplier: 6.4
+    speedMultiplier: 1.225
+    scrapDropChance: 0.4
     enemies:
     - enemy: {fileID: 11400000, guid: 9a915e36a61b8d74aaf52dbd3af491df, type: 2}
-      weight: 1
+      weight: 1.2
+    - enemy: {fileID: 11400000, guid: c13c541c50758cc4abfd3fd95d3e829f, type: 2}
+      weight: 0.5
+    - enemy: {fileID: 11400000, guid: f7b0abfb36e9bac47b51743713fa9ade, type: 2}
+      weight: 0.45
+    - enemy: {fileID: 11400000, guid: e4f98b8df5c83374eb56f874138b080b, type: 2}
+      weight: 0.45
+    - enemy: {fileID: 11400000, guid: cab4d2f91438ae448860de1de29dc9f1, type: 2}
+      weight: 0.099999994
+    bosses: []
+    endOnBossKill: 0
   - duration: 45
     spawnInterval: 0.44
-    spawnPerTick: 6
-    hpMultiplier: 5
-    speedMultiplier: 1.3199999
+    spawnPerTick: 8
+    hpMultiplier: 6.952
+    speedMultiplier: 1.24
+    scrapDropChance: 0.36
     enemies:
     - enemy: {fileID: 11400000, guid: 9a915e36a61b8d74aaf52dbd3af491df, type: 2}
-      weight: 1
+      weight: 1.2
+    - enemy: {fileID: 11400000, guid: c13c541c50758cc4abfd3fd95d3e829f, type: 2}
+      weight: 0.5
+    - enemy: {fileID: 11400000, guid: f7b0abfb36e9bac47b51743713fa9ade, type: 2}
+      weight: 0.45
+    - enemy: {fileID: 11400000, guid: e4f98b8df5c83374eb56f874138b080b, type: 2}
+      weight: 0.45
+    - enemy: {fileID: 11400000, guid: cab4d2f91438ae448860de1de29dc9f1, type: 2}
+      weight: 0.1
+    bosses: []
+    endOnBossKill: 0
   - duration: 45
     spawnInterval: 0.405
-    spawnPerTick: 7
-    hpMultiplier: 5.25
-    speedMultiplier: 1.34
+    spawnPerTick: 9
+    hpMultiplier: 7.5280004
+    speedMultiplier: 1.255
+    scrapDropChance: 0.32000002
     enemies:
     - enemy: {fileID: 11400000, guid: 9a915e36a61b8d74aaf52dbd3af491df, type: 2}
-      weight: 1
+      weight: 1.2
+    - enemy: {fileID: 11400000, guid: c13c541c50758cc4abfd3fd95d3e829f, type: 2}
+      weight: 0.5
+    - enemy: {fileID: 11400000, guid: f7b0abfb36e9bac47b51743713fa9ade, type: 2}
+      weight: 0.45
+    - enemy: {fileID: 11400000, guid: e4f98b8df5c83374eb56f874138b080b, type: 2}
+      weight: 0.45
+    - enemy: {fileID: 11400000, guid: cab4d2f91438ae448860de1de29dc9f1, type: 2}
+      weight: 0.1
+    bosses: []
+    endOnBossKill: 0
   - duration: 45
     spawnInterval: 0.37
-    spawnPerTick: 7
-    hpMultiplier: 5.5
-    speedMultiplier: 1.36
+    spawnPerTick: 9
+    hpMultiplier: 8.128
+    speedMultiplier: 1.27
+    scrapDropChance: 0.3
     enemies:
     - enemy: {fileID: 11400000, guid: 9a915e36a61b8d74aaf52dbd3af491df, type: 2}
-      weight: 1
+      weight: 1.2
+    - enemy: {fileID: 11400000, guid: c13c541c50758cc4abfd3fd95d3e829f, type: 2}
+      weight: 0.5
+    - enemy: {fileID: 11400000, guid: f7b0abfb36e9bac47b51743713fa9ade, type: 2}
+      weight: 0.45
+    - enemy: {fileID: 11400000, guid: e4f98b8df5c83374eb56f874138b080b, type: 2}
+      weight: 0.45
+    - enemy: {fileID: 11400000, guid: cab4d2f91438ae448860de1de29dc9f1, type: 2}
+      weight: 0.1
+    bosses: []
+    endOnBossKill: 0
   - duration: 90
-    spawnInterval: 0.335
+    spawnInterval: 0.83750004
     spawnPerTick: 7
-    hpMultiplier: 5.75
-    speedMultiplier: 1.38
+    hpMultiplier: 8.752
+    speedMultiplier: 1.285
+    scrapDropChance: 0.3
     enemies:
     - enemy: {fileID: 11400000, guid: 9a915e36a61b8d74aaf52dbd3af491df, type: 2}
       weight: 1
+    - enemy: {fileID: 11400000, guid: c13c541c50758cc4abfd3fd95d3e829f, type: 2}
+      weight: 0.5
+    - enemy: {fileID: 11400000, guid: f7b0abfb36e9bac47b51743713fa9ade, type: 2}
+      weight: 0.45
+    - enemy: {fileID: 11400000, guid: e4f98b8df5c83374eb56f874138b080b, type: 2}
+      weight: 0.45
+    - enemy: {fileID: 11400000, guid: cab4d2f91438ae448860de1de29dc9f1, type: 2}
+      weight: 0.1
+    bosses:
+    - {fileID: 11400000, guid: b8ea97f34003fe74ea1d9acc22535cf9, type: 2}
+    endOnBossKill: 1

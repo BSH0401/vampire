@@ -23,3 +23,20 @@ MonoBehaviour:
   contactDamage: 3
   knockbackResistance: 0
   scrapDrop: 1
+  isBoss: 0
+  attackRange: 5.5
+  windupTime: 1
+  chargeSpeed: 11
+  chargeDuration: 0.55
+  recoverTime: 0.8
+  preferredDistance: 6.5
+  attackInterval: 3
+  projectileSpeed: 6
+  projectileDamage: 4
+  fuseTime: 1.2
+  triggerRange: 1.8
+  explosionRadius: 2.2
+  explosionDamage: 8
+  explosionEnemyDamage: 40
+  shieldRadius: 4
+  summon: {fileID: 0}

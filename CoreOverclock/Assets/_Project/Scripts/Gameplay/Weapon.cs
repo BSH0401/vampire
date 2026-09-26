@@ -6,7 +6,7 @@ namespace CoreOverclock
     public struct ShotParams
     {
         public WeaponData Weapon;
-        public float Damage, Speed, Knockback, CritChance;
+        public float Damage, Speed, Knockback, CritChance, Lifetime;
         public int Pierce, Bounces;
         public float BurnDps, ExplosionRadius;
         public bool Overclocked;
@@ -62,7 +62,7 @@ namespace CoreOverclock
             cooldown -= Time.deltaTime;
 
             Vector2 origin = transform.position;
-            var target = Targeting.FindNearest(origin, Data.range);
+            var target = Targeting.FindNearest(origin, Data.range * (1f + gm.Loadout.Stats.RangePct));
             if (target == null) return;
 
             Vector2 dir = (target.Position - origin).normalized;
@@ -87,12 +87,13 @@ namespace CoreOverclock
                 Weapon = Data,
                 Damage = Data.damage * dmgMul * (Data.explosionRadius > 0f ? syn.ExplosionDamageMultiplier : 1f),
                 Speed = Data.projectileSpeed * heat.ProjectileSpeedMultiplier,
-                Knockback = Data.knockback * (ballistic ? syn.KnockbackMultiplier : 1f),
+                Knockback = Data.knockback * (ballistic ? syn.KnockbackMultiplier : 1f) * Mathf.Max(0f, 1f + stats.KnockbackPct),
+                Lifetime = Data.projectileLifetime * (1f + stats.RangePct),
                 CritChance = Data.critChance + stats.CritChance,
                 Pierce = Data.pierce + (ballistic ? syn.BonusPierce : 0),
                 Bounces = syn.WallBounces,
-                BurnDps = Data.burnDamagePerSecond * syn.BurnMultiplier * (1f + stats.DamagePct),
-                ExplosionRadius = Data.explosionRadius * syn.ExplosionRadiusMultiplier,
+                BurnDps = Data.burnDamagePerSecond * syn.BurnMultiplier * (1f + stats.DamagePct + stats.BurnDamagePct),
+                ExplosionRadius = Data.explosionRadius * syn.ExplosionRadiusMultiplier * (1f + stats.ExplosionRadiusPct),
                 Overclocked = heat.State == HeatState.Overclock,
             };
         }

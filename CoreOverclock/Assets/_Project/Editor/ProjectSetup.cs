@@ -35,20 +35,8 @@ namespace CoreOverclock.EditorTools
             shopDb.chips = DefaultContent.Chips(Root);
             EditorUtility.SetDirty(shopDb);
 
-            var scrapBit = LoadOrCreate<EnemyData>($"{Root}/Data/Enemies/E_ScrapBit.asset", e =>
-            {
-                e.id = "scrap_bit";
-                e.displayName = "스크랩 비트";
-                e.shape = EnemyShape.Triangle;
-                e.behaviour = EnemyBehaviour.Chaser;
-                e.color = new Color(0.92f, 0.95f, 1f);
-                e.scale = 0.7f;
-                e.maxHP = 10f;
-                e.moveSpeed = 2.6f;
-                e.contactDamage = 3f;
-                e.scrapDrop = 1;
-            });
-            var waves = LoadOrCreate<WaveTable>($"{Root}/Data/Waves/WaveTable.asset", t => FillWaves(t, scrapBit));
+            var enemies = DefaultContent.Enemies(Root);
+            var waves = DefaultContent.Upsert<WaveTable>($"{Root}/Data/Waves/WaveTable.asset", t => DefaultContent.FillWaves(t, enemies));
 
             PopulateScene(scene, material, player, blaster, waves, shopDb);
             ConfigurePlayer();
@@ -107,31 +95,6 @@ namespace CoreOverclock.EditorTools
             init(asset);
             AssetDatabase.CreateAsset(asset, path);
             return asset;
-        }
-
-        /// <summary>Wave durations follow 기획서 4.3; spawn pressure ramps linearly (tuned in Phase 3).</summary>
-        static void FillWaves(WaveTable table, EnemyData enemy)
-        {
-            table.waves.Clear();
-            for (int w = 1; w <= 20; w++)
-            {
-                float duration = w switch
-                {
-                    <= 5 => 30f,
-                    15 => 60f,
-                    20 => 90f,
-                    _ => 45f,
-                };
-                table.waves.Add(new WaveDefinition
-                {
-                    duration = duration,
-                    spawnInterval = Mathf.Max(0.3f, 1f - 0.035f * (w - 1)),
-                    spawnPerTick = 1 + w / 3,
-                    hpMultiplier = 1f + 0.25f * (w - 1),
-                    speedMultiplier = 1f + 0.02f * (w - 1),
-                    enemies = { new WaveSpawnEntry { enemy = enemy, weight = 1f } },
-                });
-            }
         }
 
         static void PopulateScene(Scene scene, Material material, PlayerData player, WeaponData weapon, WaveTable waves, ShopDatabase shopDb)

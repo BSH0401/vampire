@@ -7,7 +7,7 @@ namespace CoreOverclock
     public enum GameState { Combat, Resolving, Intermission, GameOver }
 
     /// <summary>
-    /// Entry point and wave flow: 아레나 전투 → 결산 → (코어 작업실: Phase 2) → 다음 웨이브.
+    /// Entry point and wave flow: 아레나 전투 → 결산 → 코어 작업실 → 다음 웨이브 (기획서 3장).
     /// Everything else in the scene is constructed at runtime from the data assets below.
     /// </summary>
     public class GameManager : MonoBehaviour
@@ -20,12 +20,15 @@ namespace CoreOverclock
         [SerializeField] WaveTable waveTable;
         [SerializeField] ShopDatabase shopDatabase;
 
-        EnemySpawner spawner;
         ScrapSystem scrap;
         HUD hud;
         ShopUI shopUI;
         DataTower[] towers;
+        WaveDefinition currentWave;
+        int waveStartFrame;
+        float waveStartRealtime;
         int waveKills, waveScrapStart;
+        float scrapRemainder, waveStartTime;
         float lastOverclockBanner = -10f;
 
         public static GameManager Instance { get; private set; }
@@ -34,6 +37,8 @@ namespace CoreOverclock
         public Loadout Loadout { get; private set; }
         public HeatSystem Heat { get; private set; }
         public Shop Shop { get; private set; }
+        public EnemySpawner Spawner { get; private set; }
+        public WaveDefinition CurrentWave => currentWave;
         public int Wave { get; private set; }
         public int TotalWaves => waveTable.Count;
         public float TimeLeft { get; private set; }
@@ -74,7 +79,8 @@ namespace CoreOverclock
             ProjectileSystem.Create(world);
             FxSystem.Create(world);
             scrap = ScrapSystem.Create(world);
-            spawner = EnemySpawner.Create(world);
+            EnemyProjectileSystem.Create(world);
+            Spawner = EnemySpawner.Create(world);
             towers = new DataTower[TowerCount];
             for (int i = 0; i < TowerCount; i++) towers[i] = DataTower.Create(world);
 
@@ -107,7 +113,10 @@ namespace CoreOverclock
         void StartWave(int wave)
         {
             Wave = wave;
-            var def = waveTable.Get(wave);
+            var def = currentWave = waveTable.Get(wave);
+            waveStartTime = Time.time;
+            waveStartFrame = Time.frameCount;
+            waveStartRealtime = Time.realtimeSinceStartup;
             TimeLeft = DevCommandLine.WaveTimeOverride > 0f ? DevCommandLine.WaveTimeOverride : def.duration;
             waveKills = 0;
             waveScrapStart = Scrap;
@@ -119,10 +128,10 @@ namespace CoreOverclock
             hud.HidePanels();
             shopUI.Hide();
             State = GameState.Combat;
-            spawner.Begin(def);
+            Spawner.Begin(def);
 
-            bool boss = wave == 5 || wave == 15 || wave == 20;
-            hud.ShowBanner(boss ? $"WAVE {wave} · 경고" : $"WAVE {wave}", boss ? Palette.Danger : Palette.Player);
+            bool boss = def.bosses.Count > 0;
+            hud.ShowBanner(boss ? $"WAVE {wave} · 보스 출현" : $"WAVE {wave}", boss ? Palette.Danger : Palette.Player);
         }
 
         void PlaceTowers()
@@ -138,10 +147,15 @@ namespace CoreOverclock
 
         void EndWave()
         {
+            if (DevCommandLine.Enabled)
+                Debug.Log($"[Dev] WaveEnd wave={Wave} time={Time.time - waveStartTime:F1}s timeLeft={TimeLeft:F1} kills={waveKills} " +
+                          $"scrap={Scrap} hpLeft={Player.HP:F0}/{Player.MaxHP:F0} dmgTaken={Player.DamageTakenThisWave:F0} weapons={Loadout.Weapons.Count} chips={Loadout.Chips.Count} bossAlive={(Boss != null ? $"{Boss.HP / Boss.MaxHP:P0}" : "no")} " +
+                          $"fps={(Time.frameCount - waveStartFrame) / Mathf.Max(0.01f, Time.realtimeSinceStartup - waveStartRealtime):F0}");
             TimeLeft = 0f;
             State = GameState.Resolving;
-            spawner.StopAndDissolveAll();
+            Spawner.StopAndDissolveAll();
             ProjectileSystem.ClearAll();
+            EnemyProjectileSystem.ClearAll();
             scrap.CollectAll();
             CameraShake.Add(0.3f);
             hud.ShowBanner("WAVE CLEAR", Palette.Scrap);
@@ -165,10 +179,14 @@ namespace CoreOverclock
                 yield break;
             }
 
+            // 결산: wave clear bonus on top of collected scrap.
+            int bonus = WaveClearBonus(Wave);
+            Scrap += bonus;
+
             // 코어 작업실
             State = GameState.Intermission;
             Shop.Open(Wave + 1);
-            shopUI.Show(Wave, waveKills, Scrap - waveScrapStart);
+            shopUI.Show(Wave, waveKills, Scrap - waveScrapStart, bonus);
         }
 
         public void NextWave()
@@ -181,7 +199,9 @@ namespace CoreOverclock
         {
             if (State == GameState.GameOver) return;
             State = GameState.GameOver;
-            spawner.StopAll();
+            if (DevCommandLine.Enabled) Debug.Log($"[Dev] PlayerDied wave={Wave} after {Time.time - waveStartTime:F1}s");
+            Spawner.StopAll();
+            EnemyProjectileSystem.ClearAll();
             foreach (var e in Enemy.Active.ToArray()) e.FreezeAndDissolve(Random.Range(0.3f, 1f));
             hud.ShowBanner("CORE DESTROYED", Palette.Danger, 2f);
             StartCoroutine(GameOverRoutine());
@@ -206,13 +226,42 @@ namespace CoreOverclock
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
 
-        public void RegisterKill()
+        public void RegisterKill(Enemy enemy)
         {
             waveKills++;
             TotalKills++;
+            if (!enemy.IsBoss || State != GameState.Combat) return;
+
+            CameraShake.Add(0.8f);
+            FxSystem.Pulse(enemy.Position, enemy.Data.color, 0.5f, 14f, 0.8f);
+            hud.ShowBanner($"{enemy.Data.displayName} 격파!", Palette.Scrap, 2f);
+            // Wave 20: destroying the boss core ends the run early (기획서 4.3).
+            if (currentWave.endOnBossKill && Boss == null) EndWave();
+        }
+
+        /// <summary>First living boss on the field (for the HUD bar).</summary>
+        public Enemy Boss
+        {
+            get
+            {
+                foreach (var e in Enemy.Active) if (e.IsBoss && e.IsAlive) return e;
+                return null;
+            }
         }
 
         public void AddScrap(int amount) => Scrap += amount;
+
+        static int WaveClearBonus(int wave) => 5 + wave * 2;
+
+        /// <summary>Scrap picked up from the field; applies the scrap-gain chip bonus.</summary>
+        public void CollectScrap(int amount)
+        {
+            // Capped at +100% so stacking scrap chips can't break the economy.
+            scrapRemainder += amount * (1f + Mathf.Min(Loadout.Stats.ScrapGainPct, 1f));
+            int whole = Mathf.FloorToInt(scrapRemainder);
+            scrapRemainder -= whole;
+            Scrap += whole;
+        }
 
         public bool TrySpendScrap(int amount)
         {

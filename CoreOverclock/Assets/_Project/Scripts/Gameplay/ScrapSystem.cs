@@ -99,7 +99,7 @@ namespace CoreOverclock
 
                 if (p.Magnet && dist < CollectDistance)
                 {
-                    gm.AddScrap(p.Value);
+                    gm.CollectScrap(p.Value);
                     pool.Release(p.Transform);
                     active[i] = active[^1];
                     active.RemoveAt(active.Count - 1);

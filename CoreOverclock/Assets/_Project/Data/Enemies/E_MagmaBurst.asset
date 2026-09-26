@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13e257be98a765948b86f7b721054ec6, type: 3}
+  m_Name: E_MagmaBurst
+  m_EditorClassIdentifier: Assembly-CSharp::CoreOverclock.EnemyData
+  id: magma_burst
+  displayName: "\uB9C8\uADF8\uB9C8 \uBC84\uC2A4\uD2B8"
+  shape: 3
+  behaviour: 3
+  color: {r: 1, g: 0.3, b: 0.2, a: 1}
+  scale: 0.75
+  maxHP: 12
+  moveSpeed: 2.5
+  contactDamage: 4
+  knockbackResistance: 0
+  scrapDrop: 1
+  isBoss: 0
+  attackRange: 5.5
+  windupTime: 1
+  chargeSpeed: 11
+  chargeDuration: 0.55
+  recoverTime: 0.8
+  preferredDistance: 6.5
+  attackInterval: 3
+  projectileSpeed: 6
+  projectileDamage: 4
+  fuseTime: 1.1
+  triggerRange: 1.8
+  explosionRadius: 2.2
+  explosionDamage: 8
+  explosionEnemyDamage: 40
+  shieldRadius: 4
+  summon: {fileID: 0}

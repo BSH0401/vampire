@@ -23,6 +23,7 @@ namespace CoreOverclock
         public static Sprite Circle => Get("circle", false, p => p.magnitude - 0.9f);
         public static Sprite Diamond => Get("diamond", false, p => Poly(p, DiamondVerts));
         public static Sprite Ring => Get("ring", false, p => Mathf.Abs(p.magnitude - 0.82f) - 0.1f);
+        public static Sprite ThinRing => Get("ring_thin", false, p => Mathf.Abs(p.magnitude - 0.9f) - 0.025f);
         public static Sprite Cross => Get("cross", false, p =>
         {
             var r = Rotate(p, 45f);

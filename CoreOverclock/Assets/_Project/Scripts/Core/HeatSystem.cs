@@ -41,7 +41,10 @@ namespace CoreOverclock
         public float Ratio => Value / Max;
         public bool WeaponsEnabled => State != HeatState.Meltdown;
         public bool VentReady => VentCooldownLeft <= 0f && State != HeatState.Meltdown;
-        public float DamageMultiplier => State == HeatState.Overclock ? 1.5f : 1f;
+        public float DamageMultiplier => State == HeatState.Overclock ? 1.5f + Stats.OverclockDamagePct : 1f;
+        public float CurrentVentCooldown => VentCooldown * Mathf.Max(0.3f, 1f + Stats.VentCooldownPct);
+        float CurrentMeltdownDuration => MeltdownDuration * Mathf.Max(0.3f, 1f + Stats.MeltdownDurationPct);
+        static PlayerStats Stats => GameManager.Instance.Loadout.Stats;
         public float ProjectileSpeedMultiplier => State == HeatState.Overclock ? 2f : 1f;
 
         public event Action<HeatState> StateChanged;
@@ -71,7 +74,7 @@ namespace CoreOverclock
         void EnterMeltdown()
         {
             Value = Max;
-            MeltdownTimeLeft = MeltdownDuration;
+            MeltdownTimeLeft = CurrentMeltdownDuration;
             dotTimer = MeltdownTick;
             CameraShake.Add(0.5f);
             SetState(HeatState.Meltdown);
@@ -88,7 +91,7 @@ namespace CoreOverclock
             if (State == HeatState.Meltdown)
             {
                 MeltdownTimeLeft -= dt;
-                Value = Mathf.Lerp(MeltdownRecoverTo, Max, Mathf.Clamp01(MeltdownTimeLeft / MeltdownDuration));
+                Value = Mathf.Lerp(MeltdownRecoverTo, Max, Mathf.Clamp01(MeltdownTimeLeft / CurrentMeltdownDuration));
                 dotTimer -= dt;
                 if (dotTimer <= 0f)
                 {
@@ -119,7 +122,7 @@ namespace CoreOverclock
             if (!VentReady || gm.State != GameState.Combat) return false;
 
             Value = Mathf.Max(0f, Value - VentAmount);
-            VentCooldownLeft = VentCooldown;
+            VentCooldownLeft = CurrentVentCooldown;
             Vector2 origin = gm.Player.Position;
             float damage = VentDamage * (1f + gm.Loadout.Stats.DamagePct);
 
@@ -136,6 +139,7 @@ namespace CoreOverclock
                 });
             }
 
+            EnemyProjectileSystem.ClearInRadius(origin, VentRadius);
             var cool = new Color(0.5f, 0.9f, 1f);
             FxSystem.Pulse(origin, cool, 0.5f, VentRadius * 2.4f, 0.4f);
             FxSystem.Pulse(origin, Color.white, 0.3f, VentRadius * 1.6f, 0.25f);

@@ -9,6 +9,8 @@ namespace CoreOverclock
     public class PlayerStats
     {
         public float MaxHP, MoveSpeedPct, DamagePct, FireRatePct, HeatGenPct, CoolingFlat, PickupRange, CritChance;
+        public float RegenPerSec, ArmorPct, VentCooldownPct, RangePct, OverclockDamagePct, ScrapGainPct;
+        public float ExplosionRadiusPct, BurnDamagePct, KnockbackPct, MeltdownDurationPct;
 
         public void Add(StatType type, float v)
         {
@@ -22,6 +24,16 @@ namespace CoreOverclock
                 case StatType.CoolingFlat: CoolingFlat += v; break;
                 case StatType.PickupRange: PickupRange += v; break;
                 case StatType.CritChance: CritChance += v; break;
+                case StatType.RegenPerSec: RegenPerSec += v; break;
+                case StatType.ArmorPct: ArmorPct += v; break;
+                case StatType.VentCooldownPct: VentCooldownPct += v; break;
+                case StatType.RangePct: RangePct += v; break;
+                case StatType.OverclockDamagePct: OverclockDamagePct += v; break;
+                case StatType.ScrapGainPct: ScrapGainPct += v; break;
+                case StatType.ExplosionRadiusPct: ExplosionRadiusPct += v; break;
+                case StatType.BurnDamagePct: BurnDamagePct += v; break;
+                case StatType.KnockbackPct: KnockbackPct += v; break;
+                case StatType.MeltdownDurationPct: MeltdownDurationPct += v; break;
             }
         }
     }

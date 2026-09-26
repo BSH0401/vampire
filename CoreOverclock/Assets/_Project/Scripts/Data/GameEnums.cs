@@ -8,7 +8,8 @@ namespace CoreOverclock
 
     public enum EnemyShape { Triangle, Arrow, Octagon, Circle, Square }
 
-    public enum EnemyBehaviour { Chaser, Charger, Turret, Bomber, Elite }
+    /// <summary>AI archetype (기획서 5장). Values are serialized as ints: append only.</summary>
+    public enum EnemyBehaviour { Chaser, Charger, Turret, Bomber, Golem, BossOverseer, BossLegion }
 
     public static class WeaponTags
     {

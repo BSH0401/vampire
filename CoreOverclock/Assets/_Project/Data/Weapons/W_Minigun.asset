@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 946a8ab372925704eb9ebd79c4590260, type: 3}
+  m_Name: W_Minigun
+  m_EditorClassIdentifier: Assembly-CSharp::CoreOverclock.WeaponData
+  id: minigun
+  displayName: "\uBBF8\uB2C8\uAC74"
+  description: "\uD0C4\uB9C9\uC744 \uC3DF\uC544\uBD93\uB294\uB2E4. \uC5F4\uC774 \uBE60\uB974\uAC8C
+    \uC624\uB978\uB2E4."
+  tag: 0
+  tier: 2
+  price: 32
+  damage: 3.5
+  fireInterval: 0.1
+  range: 6.5
+  projectileCount: 1
+  spreadAngle: 8
+  pierce: 0
+  knockback: 0.8
+  critChance: 0.05
+  critMultiplier: 2
+  projectileSpeed: 20
+  projectileRadius: 0.08
+  projectileLifetime: 0.5
+  projectileColor: {r: 1, g: 0.9, b: 0.5, a: 1}
+  heatPerShot: 0.55
+  slowAmount: 0
+  slowDuration: 1.5
+  burnDamagePerSecond: 0
+  burnDuration: 2
+  explosionRadius: 0

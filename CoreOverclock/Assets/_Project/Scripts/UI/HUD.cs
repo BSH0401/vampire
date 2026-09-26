@@ -12,6 +12,9 @@ namespace CoreOverclock
         RectTransform hpFill, heatFill;
         Image heatFillImage, ventFillImage;
         RectTransform ventFill;
+        GameObject bossBar;
+        RectTransform bossFill;
+        Text bossLabel;
         GameObject gameOverPanel, pausePanel;
         Text gameOverTitle, gameOverStats;
         Button restartButton, resumeButton;
@@ -55,6 +58,7 @@ namespace CoreOverclock
             banner = UIFactory.Label(UIFactory.Rect("Banner", root, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 180f), new Vector2(1200f, 120f)),
                 "", 80, Color.white);
             BuildHeatGauge(root, bottom);
+            BuildBossBar(root, top);
 
             gameOverPanel = BuildPanel("GameOverPanel", out gameOverTitle, out gameOverStats);
             restartButton = UIFactory.Button(gameOverPanel.transform, "다시 시작", new Vector2(0f, -170f), new Vector2(420f, 80f), gm.Restart);
@@ -65,6 +69,17 @@ namespace CoreOverclock
             pauseStats.rectTransform.anchoredPosition = new Vector2(0f, -120f);
             resumeButton = UIFactory.Button(pausePanel.transform, "계속하기", new Vector2(0f, -40f), new Vector2(420f, 80f), () => gm.SetPaused(false));
             UIFactory.Button(pausePanel.transform, "처음부터", new Vector2(0f, -140f), new Vector2(420f, 80f), gm.Restart);
+        }
+
+        void BuildBossBar(Transform root, Vector2 top)
+        {
+            var back = UIFactory.Rect("BossBar", root, top, top, new Vector2(0f, -122f), new Vector2(900f, 30f));
+            UIFactory.Image(back, new Color(0.15f, 0.03f, 0.06f, 0.85f));
+            bossFill = UIFactory.Stretch("BossFill", back);
+            UIFactory.Image(bossFill, new Color(1f, 0.2f, 0.35f, 0.9f));
+            bossLabel = UIFactory.Label(UIFactory.Stretch("BossName", back), "", 22, Color.white);
+            bossBar = back.gameObject;
+            bossBar.SetActive(false);
         }
 
         void BuildHeatGauge(Transform root, Vector2 bottom)
@@ -126,6 +141,15 @@ namespace CoreOverclock
 
             UpdateHeat();
 
+            var boss = gm.State == GameState.Combat ? gm.Boss : null;
+            bossBar.SetActive(boss);
+            if (boss)
+            {
+                float r = Mathf.Clamp01(boss.HP / boss.MaxHP);
+                bossFill.anchorMax = new Vector2(r, 1f);
+                bossLabel.text = $"{boss.Data.displayName}   {Mathf.CeilToInt(r * 100f)}%";
+            }
+
             if (bannerTimer > 0f)
             {
                 bannerTimer -= Time.unscaledDeltaTime;
@@ -157,7 +181,7 @@ namespace CoreOverclock
                     break;
             }
 
-            float ventRatio = 1f - heat.VentCooldownLeft / HeatSystem.VentCooldown;
+            float ventRatio = 1f - heat.VentCooldownLeft / heat.CurrentVentCooldown;
             ventFill.anchorMax = new Vector2(ventRatio, 1f);
             if (heat.State == HeatState.Meltdown) ventLabel.text = "<color=#FF4050>방열 불가</color>";
             else if (heat.VentReady) ventLabel.text = "긴급 방열 준비 [Space]";

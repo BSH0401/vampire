@@ -4,7 +4,13 @@ using UnityEngine;
 
 namespace CoreOverclock
 {
-    public enum StatType { MaxHP, MoveSpeedPct, DamagePct, FireRatePct, HeatGenPct, CoolingFlat, PickupRange, CritChance }
+    /// <summary>Serialized as ints: append only.</summary>
+    public enum StatType
+    {
+        MaxHP, MoveSpeedPct, DamagePct, FireRatePct, HeatGenPct, CoolingFlat, PickupRange, CritChance,
+        RegenPerSec, ArmorPct, VentCooldownPct, RangePct, OverclockDamagePct, ScrapGainPct,
+        ExplosionRadiusPct, BurnDamagePct, KnockbackPct, MeltdownDurationPct,
+    }
 
     [Serializable]
     public class StatModifier
@@ -22,10 +28,27 @@ namespace CoreOverclock
             StatType.CoolingFlat => $"냉각 {Signed(value)}/s",
             StatType.PickupRange => $"회수 범위 {Signed(value)}",
             StatType.CritChance => $"치명타 확률 {Pct(value)}",
+            StatType.RegenPerSec => $"HP 재생 {Signed(value)}/s",
+            StatType.ArmorPct => $"받는 피해 {Pct(-value)}",
+            StatType.VentCooldownPct => $"방열 쿨타임 {Pct(value)}",
+            StatType.RangePct => $"사거리 {Pct(value)}",
+            StatType.OverclockDamagePct => $"오버클럭 공격력 {Pct(value)}",
+            StatType.ScrapGainPct => $"스크랩 획득 {Pct(value)}",
+            StatType.ExplosionRadiusPct => $"폭발 범위 {Pct(value)}",
+            StatType.BurnDamagePct => $"도트 피해 {Pct(value)}",
+            StatType.KnockbackPct => $"넉백 {Pct(value)}",
+            StatType.MeltdownDurationPct => $"과열 락다운 시간 {Pct(value)}",
             _ => stat.ToString(),
         };
 
         static string Signed(float v) => (v >= 0 ? "+" : "") + v.ToString("0.#");
+        /// <summary>True when a positive value is bad for the player (shown in red).</summary>
+        public bool IsDrawback => stat switch
+        {
+            StatType.HeatGenPct or StatType.VentCooldownPct or StatType.MeltdownDurationPct => value > 0f,
+            _ => value < 0f,
+        };
+
         static string Pct(float v) => (v >= 0 ? "+" : "") + Mathf.RoundToInt(v * 100f) + "%";
     }
 

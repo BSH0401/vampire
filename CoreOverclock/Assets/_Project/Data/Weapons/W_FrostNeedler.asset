@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 946a8ab372925704eb9ebd79c4590260, type: 3}
+  m_Name: W_FrostNeedler
+  m_EditorClassIdentifier: Assembly-CSharp::CoreOverclock.WeaponData
+  id: frost_needler
+  displayName: "\uD504\uB85C\uC2A4\uD2B8 \uB2C8\uB4E4\uB7EC"
+  description: "\uBE59\uACB0 \uCE68\uC744 \uC5F0\uC0AC\uD574 \uAC15\uD558\uAC8C \uB454\uD654\uC2DC\uD0A8\uB2E4."
+  tag: 2
+  tier: 2
+  price: 30
+  damage: 3.5
+  fireInterval: 0.15
+  range: 7
+  projectileCount: 1
+  spreadAngle: 8
+  pierce: 0
+  knockback: 0.3
+  critChance: 0.05
+  critMultiplier: 2
+  projectileSpeed: 22
+  projectileRadius: 0.07
+  projectileLifetime: 0.5
+  projectileColor: {r: 0.7, g: 0.95, b: 1, a: 1}
+  heatPerShot: 0.35
+  slowAmount: 0.5
+  slowDuration: 1.2
+  burnDamagePerSecond: 0
+  burnDuration: 2
+  explosionRadius: 0

@@ -13,6 +13,7 @@ namespace CoreOverclock
         readonly List<RaycastHit2D> hits = new();
         readonly List<Collider2D> overlaps = new();
         ContactFilter2D filter;
+        int clearVersion; // bumped by ClearAll so Update can bail if a hit ended the wave mid-loop
 
         public static ProjectileSystem Create(Transform parent)
         {
@@ -49,10 +50,12 @@ namespace CoreOverclock
             if (!instance) return;
             for (int i = instance.active.Count - 1; i >= 0; i--) instance.pool.Release(instance.active[i]);
             instance.active.Clear();
+            instance.clearVersion++;
         }
 
         /// <summary>Area damage for Explosive weapons.</summary>
-        public static void Explode(Vector2 center, float radius, float damage, float knockback, bool crit, Color color)
+        public static void Explode(Vector2 center, float radius, float damage, float knockback, bool crit, Color color,
+            float slowAmount = 0f, float slowDuration = 0f, float burnDps = 0f, float burnDuration = 0f)
         {
             if (!instance) return;
             FxSystem.Pulse(center, color, 0.3f, radius * 2.4f, 0.3f);
@@ -68,6 +71,7 @@ namespace CoreOverclock
                 {
                     Amount = damage, Crit = crit, Knockback = knockback,
                     Direction = to.sqrMagnitude > 0.001f ? to.normalized : Vector2.up,
+                    SlowAmount = slowAmount, SlowDuration = slowDuration, BurnDps = burnDps, BurnDuration = burnDuration,
                 });
             }
         }
@@ -75,9 +79,12 @@ namespace CoreOverclock
         void Update()
         {
             float dt = Time.deltaTime;
+            int version = clearVersion;
             for (int i = active.Count - 1; i >= 0; i--)
             {
-                if (active[i].Step(dt, filter, hits)) continue;
+                bool alive = active[i].Step(dt, filter, hits);
+                if (version != clearVersion) return;
+                if (alive) continue;
                 pool.Release(active[i]);
                 active[i] = active[^1];
                 active.RemoveAt(active.Count - 1);
@@ -103,7 +110,7 @@ namespace CoreOverclock
             position = pos;
             direction = dir;
             crit = isCrit;
-            life = s.Weapon.projectileLifetime;
+            life = s.Lifetime > 0f ? s.Lifetime : s.Weapon.projectileLifetime;
             pierceLeft = s.Pierce;
             bouncesLeft = s.Bounces;
             damage = s.Damage * (isCrit ? s.Weapon.critMultiplier : 1f);
@@ -167,11 +174,12 @@ namespace CoreOverclock
             if (Mathf.Abs(position.y) > h.y) { direction.y = -direction.y; position.y = Mathf.Clamp(position.y, -h.y, h.y); }
             bouncesLeft--;
             alreadyHit.Clear();
-            life = Mathf.Max(life, shot.Weapon.projectileLifetime * 0.6f);
+            life = Mathf.Max(life, shot.Lifetime * 0.6f);
             FxSystem.Pulse(position, shot.Weapon.projectileColor, 0.1f, 0.5f, 0.1f);
         }
 
         void Explode(Vector2 at) =>
-            ProjectileSystem.Explode(at, shot.ExplosionRadius, damage, shot.Knockback, crit, shot.Weapon.projectileColor);
+            ProjectileSystem.Explode(at, shot.ExplosionRadius, damage, shot.Knockback, crit, shot.Weapon.projectileColor,
+                shot.Weapon.slowAmount, shot.Weapon.slowDuration, shot.BurnDps, shot.Weapon.burnDuration);
     }
 }

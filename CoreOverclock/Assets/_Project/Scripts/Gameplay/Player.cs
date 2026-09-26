@@ -26,6 +26,9 @@ namespace CoreOverclock
 
         public event Action Died;
 
+        /// <summary>Damage taken this wave after armor (tracked even in -god test runs).</summary>
+        public float DamageTakenThisWave { get; private set; }
+
         public static Player Create(PlayerData data, Transform parent)
         {
             var go = new GameObject("Player") { layer = GameLayers.Player };
@@ -70,6 +73,7 @@ namespace CoreOverclock
         public void ResetForWave()
         {
             HP = MaxHP;
+            DamageTakenThisWave = 0f;
             knock = Vector2.zero;
             invulnerableTimer = 0f;
             rb.position = Vector2.zero;
@@ -81,6 +85,9 @@ namespace CoreOverclock
         {
             float dt = Time.deltaTime;
             invulnerableTimer -= dt;
+            var gm = GameManager.Instance;
+            if (IsAlive && gm && gm.State == GameState.Combat && Stats.RegenPerSec > 0f)
+                HP = Mathf.Min(MaxHP, HP + Stats.RegenPerSec * dt);
             flashTimer -= dt;
             wallZapCooldown -= dt;
 
@@ -149,10 +156,13 @@ namespace CoreOverclock
         public void TakeDamage(float amount, Vector2 push)
         {
             knock += push;
-            if (invulnerableTimer > 0f || !IsAlive || DevCommandLine.God) return;
+            if (invulnerableTimer > 0f || !IsAlive) return;
 
-            HP = Mathf.Max(0f, HP - amount);
+            amount *= 1f - Mathf.Clamp(Stats.ArmorPct, 0f, 0.7f);
+            DamageTakenThisWave += amount;
             invulnerableTimer = data.invulnerableTime;
+            if (DevCommandLine.God) return;
+            HP = Mathf.Max(0f, HP - amount);
             flashTimer = 0.08f;
             DamagePopups.Show(Position, amount, Palette.Danger, false);
             CameraShake.Add(0.35f);
@@ -164,7 +174,9 @@ namespace CoreOverclock
         /// <summary>Meltdown damage: ignores invulnerability, no knockback or hit-stop.</summary>
         public void TakeTrueDamage(float amount)
         {
-            if (!IsAlive || DevCommandLine.God) return;
+            if (!IsAlive) return;
+            DamageTakenThisWave += amount;
+            if (DevCommandLine.God) return;
             HP = Mathf.Max(0f, HP - amount);
             flashTimer = 0.08f;
             DamagePopups.Show(Position, amount, Palette.Overclock, false);

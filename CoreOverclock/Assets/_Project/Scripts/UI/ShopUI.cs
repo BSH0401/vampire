@@ -140,10 +140,10 @@ namespace CoreOverclock
             return slot;
         }
 
-        public void Show(int clearedWave, int kills, int scrapGained)
+        public void Show(int clearedWave, int kills, int scrapGained, int clearBonus)
         {
             summary.text = clearedWave > 0
-                ? $"WAVE {clearedWave} 클리어  ·  처치 {kills}  ·  스크랩 +{scrapGained}   →   다음: WAVE {clearedWave + 1}"
+                ? $"WAVE {clearedWave} 클리어  ·  처치 {kills}  ·  스크랩 +{scrapGained} (클리어 보너스 {clearBonus} 포함)   →   다음: WAVE {clearedWave + 1}"
                 : "";
             root.SetActive(true);
             root.transform.SetAsLastSibling();
@@ -241,7 +241,7 @@ namespace CoreOverclock
             var sb = new StringBuilder();
             foreach (var m in c.modifiers)
             {
-                bool bad = (m.stat == StatType.HeatGenPct) ? m.value > 0f : m.value < 0f;
+                bool bad = m.IsDrawback;
                 sb.Append(bad ? $"<color=#FF6B6B>{m.Describe()}</color>\n" : $"{m.Describe()}\n");
             }
             if (!string.IsNullOrEmpty(c.description)) sb.Append($"<color=#7F8AA8>{c.description}</color>");

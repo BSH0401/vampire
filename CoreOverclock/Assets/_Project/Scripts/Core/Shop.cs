@@ -23,7 +23,7 @@ namespace CoreOverclock
     {
         public const int SlotCount = 4;
         public const float SellRatio = 0.7f;
-        const float PriceGrowthPerWave = 0.1f;
+        const float PriceGrowthPerWave = 0.12f;
 
         readonly ShopDatabase db;
         readonly Loadout loadout;
