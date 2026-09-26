@@ -172,6 +172,7 @@ namespace CoreOverclock
 
             var popupColor = Shielded ? new Color(0.6f, 0.8f, 1f) : info.Crit ? new Color(1f, 0.85f, 0.2f) : Color.white;
             DamagePopups.Show(Position, amount, popupColor, info.Crit);
+            AudioManager.Play(SfxId.Hit, 0.22f, 0.15f);
             if (info.Crit)
             {
                 CameraShake.Add(0.15f);
@@ -195,6 +196,7 @@ namespace CoreOverclock
         void Die()
         {
             FxSystem.Pulse(Position, Data.color, 0.2f, 1.6f * Data.scale, 0.2f);
+            AudioManager.Play(SfxId.EnemyDie, 0.3f, 0.12f);
             ScrapSystem.Drop(Position, RollScrap());
             GameManager.Instance.RegisterKill(this);
             var b = brain;
@@ -273,6 +275,7 @@ namespace CoreOverclock
             FxSystem.Pulse(center, color, 0.3f, radius * 2.4f, 0.35f);
             FxSystem.Pulse(center, Color.white, 0.2f, radius * 1.4f, 0.2f);
             CameraShake.Add(0.3f);
+            AudioManager.Play(SfxId.Explosion, 0.6f);
 
             var player = GameManager.Instance.Player;
             Vector2 toPlayer = player.Position - center;

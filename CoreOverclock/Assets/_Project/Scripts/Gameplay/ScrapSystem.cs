@@ -100,6 +100,7 @@ namespace CoreOverclock
                 if (p.Magnet && dist < CollectDistance)
                 {
                     gm.CollectScrap(p.Value);
+                    AudioManager.PlayPickup();
                     pool.Release(p.Transform);
                     active[i] = active[^1];
                     active.RemoveAt(active.Count - 1);

@@ -144,6 +144,7 @@ namespace CoreOverclock
             FxSystem.Pulse(origin, cool, 0.5f, VentRadius * 2.4f, 0.4f);
             FxSystem.Pulse(origin, Color.white, 0.3f, VentRadius * 1.6f, 0.25f);
             CameraShake.Add(0.4f);
+            AudioManager.Play(SfxId.Vent, 0.8f, 0f);
             RefreshState();
             return true;
         }

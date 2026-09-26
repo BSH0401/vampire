@@ -142,6 +142,7 @@ namespace CoreOverclock
                 var push = WallNormal(Position) * data.wallKnockback;
                 FxSystem.Pulse(Position, Palette.Wall, 0.3f, 1.8f, 0.25f);
                 CameraShake.Add(0.25f);
+                AudioManager.Play(SfxId.Zap, 0.5f);
                 TakeDamage(data.wallDamage, push);
             }
         }
@@ -166,6 +167,8 @@ namespace CoreOverclock
             flashTimer = 0.08f;
             DamagePopups.Show(Position, amount, Palette.Danger, false);
             CameraShake.Add(0.35f);
+            AudioManager.Play(SfxId.PlayerHurt, 0.7f);
+            PostFx.PlayerHit();
             TimeControl.HitStop();
 
             if (HP <= 0f) Die();

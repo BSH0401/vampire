@@ -15,6 +15,8 @@ namespace CoreOverclock.EditorTools
         const string Root = "Assets/_Project";
         const string ScenePath = Root + "/Scenes/Arena.unity";
         const string BuildPath = "Builds/Windows/CoreOverclock.exe";
+        const string DemoBuildPath = "Builds/Demo/CoreOverclockDemo.exe";
+        const string Version = "0.4.0";
 
         [MenuItem("Core Overclock/Setup Project")]
         public static void Setup()
@@ -45,17 +47,26 @@ namespace CoreOverclock.EditorTools
         }
 
         [MenuItem("Core Overclock/Build Windows")]
-        public static void BuildWindows()
+        public static void BuildWindows() => Build(BuildPath, null);
+
+        /// <summary>Next Fest demo: CORE_DEMO limits the run to waves 1-10 and shows a wishlist ending.</summary>
+        [MenuItem("Core Overclock/Build Demo (Windows)")]
+        public static void BuildDemo() => Build(DemoBuildPath, new[] { "CORE_DEMO" });
+
+        static void Build(string path, string[] defines)
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(BuildPath));
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
             var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
             {
                 scenes = new[] { ScenePath },
-                locationPathName = BuildPath,
+                locationPathName = path,
                 target = BuildTarget.StandaloneWindows64,
                 options = BuildOptions.None,
+                extraScriptingDefines = defines,
             });
-            Debug.Log($"[Build] {report.summary.result} errors={report.summary.totalErrors} size={report.summary.totalSize}");
+            // Lets Steamworks initialise outside the Steam client (480 = Valve's Spacewar test app).
+            File.WriteAllText(Path.Combine(Path.GetDirectoryName(path), "steam_appid.txt"), "480");
+            Debug.Log($"[Build] {path} {report.summary.result} errors={report.summary.totalErrors} size={report.summary.totalSize}");
             if (Application.isBatchMode && report.summary.result != UnityEditor.Build.Reporting.BuildResult.Succeeded)
                 EditorApplication.Exit(1);
         }
@@ -65,6 +76,7 @@ namespace CoreOverclock.EditorTools
         {
             Setup();
             BuildWindows();
+            BuildDemo();
         }
 
         static void SetupLayers()
@@ -129,9 +141,11 @@ namespace CoreOverclock.EditorTools
         {
             PlayerSettings.companyName = "CoreOverclock";
             PlayerSettings.productName = "Core Overclock";
-            PlayerSettings.fullScreenMode = FullScreenMode.Windowed;
-            PlayerSettings.defaultScreenWidth = 1600;
-            PlayerSettings.defaultScreenHeight = 900;
+            PlayerSettings.bundleVersion = Version;
+            // Release default is borderless fullscreen; smoke tests pass -screen-fullscreen 0.
+            PlayerSettings.fullScreenMode = FullScreenMode.FullScreenWindow;
+            PlayerSettings.defaultScreenWidth = 1920;
+            PlayerSettings.defaultScreenHeight = 1080;
             PlayerSettings.resizableWindow = true;
             PlayerSettings.runInBackground = true;
         }

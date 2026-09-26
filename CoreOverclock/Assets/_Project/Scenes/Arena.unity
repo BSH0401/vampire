@@ -119,11 +119,15 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 --- !u!1 &21310451
 =======
 --- !u!1 &1029673212
 >>>>>>> Stashed changes
+=======
+--- !u!1 &1025981879
+>>>>>>> bdce595e78f5bd93f81835cecc3918f09ec5dcae
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -131,6 +135,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+<<<<<<< HEAD
 <<<<<<< Updated upstream
   - component: {fileID: 21310453}
   - component: {fileID: 21310452}
@@ -214,6 +219,11 @@ GameObject:
   - component: {fileID: 1438179860}
   - component: {fileID: 1438179859}
 >>>>>>> Stashed changes
+=======
+  - component: {fileID: 1025981882}
+  - component: {fileID: 1025981881}
+  - component: {fileID: 1025981880}
+>>>>>>> bdce595e78f5bd93f81835cecc3918f09ec5dcae
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -221,41 +231,57 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 --- !u!114 &939276873
 =======
 --- !u!114 &1438179859
 >>>>>>> Stashed changes
+=======
+--- !u!114 &1025981880
+>>>>>>> bdce595e78f5bd93f81835cecc3918f09ec5dcae
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
+<<<<<<< HEAD
 <<<<<<< Updated upstream
   m_GameObject: {fileID: 939276872}
 =======
   m_GameObject: {fileID: 1438179858}
 >>>>>>> Stashed changes
+=======
+  m_GameObject: {fileID: 1025981879}
+>>>>>>> bdce595e78f5bd93f81835cecc3918f09ec5dcae
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 310cea06b4b79924ba5eff5689ad29ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CoreOverclock.CameraShake
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 --- !u!20 &939276874
 =======
 --- !u!20 &1438179860
 >>>>>>> Stashed changes
+=======
+--- !u!20 &1025981881
+>>>>>>> bdce595e78f5bd93f81835cecc3918f09ec5dcae
 Camera:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
+<<<<<<< HEAD
 <<<<<<< Updated upstream
   m_GameObject: {fileID: 939276872}
 =======
   m_GameObject: {fileID: 1438179858}
 >>>>>>> Stashed changes
+=======
+  m_GameObject: {fileID: 1025981879}
+>>>>>>> bdce595e78f5bd93f81835cecc3918f09ec5dcae
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
@@ -300,24 +326,81 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 --- !u!4 &939276875
 =======
 --- !u!4 &1438179861
 >>>>>>> Stashed changes
+=======
+--- !u!4 &1025981882
+>>>>>>> bdce595e78f5bd93f81835cecc3918f09ec5dcae
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
+<<<<<<< HEAD
 <<<<<<< Updated upstream
   m_GameObject: {fileID: 939276872}
 =======
   m_GameObject: {fileID: 1438179858}
 >>>>>>> Stashed changes
+=======
+  m_GameObject: {fileID: 1025981879}
+>>>>>>> bdce595e78f5bd93f81835cecc3918f09ec5dcae
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: -10}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1262465246
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1262465248}
+  - component: {fileID: 1262465247}
+  m_Layer: 0
+  m_Name: GameManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1262465247
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1262465246}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95f361955c8b53d478d532f4302415b3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CoreOverclock.GameManager
+  spriteMaterial: {fileID: 2100000, guid: dbdd6619e925cde4cb37659929dc42fe, type: 2}
+  playerData: {fileID: 11400000, guid: 047268bc49410cb4c9a163dad3cd1ab7, type: 2}
+  startingWeapon: {fileID: 11400000, guid: 02607d97dbbf9e345b8e7498fcef0cbf, type: 2}
+  waveTable: {fileID: 11400000, guid: 5e1f4759dfa0cea47b59c0384e50ca49, type: 2}
+  shopDatabase: {fileID: 11400000, guid: a7fa872eb49858149969884e8c546ef4, type: 2}
+--- !u!4 &1262465248
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1262465246}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -327,6 +410,7 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+<<<<<<< HEAD
 <<<<<<< Updated upstream
   - {fileID: 939276875}
   - {fileID: 21310453}
@@ -334,3 +418,7 @@ SceneRoots:
   - {fileID: 1438179861}
   - {fileID: 1029673214}
 >>>>>>> Stashed changes
+=======
+  - {fileID: 1025981882}
+  - {fileID: 1262465248}
+>>>>>>> bdce595e78f5bd93f81835cecc3918f09ec5dcae

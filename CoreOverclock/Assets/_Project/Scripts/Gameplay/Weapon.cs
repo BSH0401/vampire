@@ -111,6 +111,13 @@ namespace CoreOverclock
                 ProjectileSystem.Spawn(shot, muzzle, new Vector2(Mathf.Cos(a), Mathf.Sin(a)), crit);
             }
             recoil = 0.08f;
+            AudioManager.Play(Data.tag switch
+            {
+                WeaponTag.Energy => SfxId.ShootEnergy,
+                WeaponTag.Cryo => SfxId.ShootCryo,
+                WeaponTag.Explosive => SfxId.ShootExplosive,
+                _ => SfxId.ShootBallistic,
+            }, 0.28f);
         }
     }
 

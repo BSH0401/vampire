@@ -66,10 +66,10 @@ namespace CoreOverclock
             {
                 int index = i;
                 float x = (i - 1.5f) * 400f;
-                cards.Add(BuildCard(dim, new Vector2(x, 170f), () => shop.Buy(index), () => shop.ToggleLock(index)));
+                cards.Add(BuildCard(dim, new Vector2(x, 170f), () => Feedback(shop.Buy(index)), () => shop.ToggleLock(index)));
             }
 
-            rerollButton = UIFactory.Button(dim, "리롤", new Vector2(-300f, -105f), new Vector2(360f, 70f), () => shop.Reroll());
+            rerollButton = UIFactory.Button(dim, "리롤", new Vector2(-300f, -105f), new Vector2(360f, 70f), () => Feedback(shop.Reroll()));
             rerollLabel = rerollButton.GetComponentInChildren<Text>();
             nextButton = UIFactory.Button(dim, "다음 웨이브 ▶", new Vector2(300f, -105f), new Vector2(360f, 70f), gm.NextWave);
 
@@ -80,7 +80,7 @@ namespace CoreOverclock
             {
                 int index = i;
                 float x = -625f + i * 250f;
-                slots.Add(BuildSlot(dim, new Vector2(x, -270f), () => shop.Sell(index)));
+                slots.Add(BuildSlot(dim, new Vector2(x, -270f), () => Feedback(shop.Sell(index))));
             }
 
             synergyText = UIFactory.Label(UIFactory.Rect("Synergy", dim, c, c, new Vector2(-390f, -435f), new Vector2(1100f, 150f)),
@@ -152,6 +152,8 @@ namespace CoreOverclock
         }
 
         public void Hide() => root.SetActive(false);
+
+        static void Feedback(bool success) => AudioManager.Play(success ? SfxId.Buy : SfxId.Deny, 0.5f, 0f);
 
         void Update()
         {

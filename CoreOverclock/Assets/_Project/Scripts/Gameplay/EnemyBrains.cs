@@ -106,6 +106,7 @@ namespace CoreOverclock
                         state = State.Windup;
                         timer = D.windupTime;
                         dashDir = ToPlayer.normalized;
+                        AudioManager.Play(SfxId.ChargeWindup, D.isBoss ? 0.6f : 0.25f);
                     }
                     return Chase();
 
