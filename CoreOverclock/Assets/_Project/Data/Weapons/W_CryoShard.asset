@@ -10,29 +10,30 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 946a8ab372925704eb9ebd79c4590260, type: 3}
-  m_Name: W_Blaster
+  m_Name: W_CryoShard
   m_EditorClassIdentifier: Assembly-CSharp::CoreOverclock.WeaponData
-  id: blaster
-  displayName: "\uD384\uC2A4 \uBE14\uB798\uC2A4\uD130"
-  description: "\uAE30\uBCF8 \uB2E8\uBC1C \uD0C4\uB3C4 \uBB34\uAE30."
-  tag: 0
+  id: cryo_shard
+  displayName: "\uD06C\uB77C\uC774\uC624 \uC0E4\uB4DC"
+  description: "\uC801\uC744 \uB454\uD654\uC2DC\uD0A8\uB2E4. \uC7A5\uCC29 \uC2DC
+    \uCF54\uC5B4 \uBC1C\uC5F4 -8%."
+  tag: 2
   tier: 1
-  price: 15
-  damage: 7
-  fireInterval: 0.5
-  range: 7.5
+  price: 20
+  damage: 5
+  fireInterval: 0.7
+  range: 7
   projectileCount: 1
   spreadAngle: 8
   pierce: 0
-  knockback: 3
-  critChance: 0.1
+  knockback: 1
+  critChance: 0.05
   critMultiplier: 2
-  projectileSpeed: 17
-  projectileRadius: 0.13
+  projectileSpeed: 14
+  projectileRadius: 0.14
   projectileLifetime: 1.2
-  projectileColor: {r: 1, g: 0.85, b: 0.35, a: 1}
-  heatPerShot: 1.5
-  slowAmount: 0
+  projectileColor: {r: 0.55, g: 0.9, b: 1, a: 1}
+  heatPerShot: 1.2
+  slowAmount: 0.4
   slowDuration: 1.5
   burnDamagePerSecond: 0
   burnDuration: 2

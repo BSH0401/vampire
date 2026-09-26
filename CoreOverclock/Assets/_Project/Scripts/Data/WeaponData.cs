@@ -31,7 +31,16 @@ namespace CoreOverclock
         public float projectileLifetime = 1.2f;
         public Color projectileColor = new Color(1f, 0.9f, 0.4f);
 
-        [Header("Heat (Phase 2)")]
-        public float heatPerShot = 1f;
+        [Header("Heat")]
+        [Tooltip("Heat added per shot (gauge is 0-100)")] public float heatPerShot = 1.5f;
+
+        [Header("Tag Effects")]
+        [Range(0f, 0.9f)] public float slowAmount;
+        public float slowDuration = 1.5f;
+        public float burnDamagePerSecond;
+        public float burnDuration = 2f;
+        [Tooltip("> 0 makes the projectile explode on impact / at end of range")] public float explosionRadius;
+
+        public float ShotsPerSecond => fireInterval > 0f ? 1f / fireInterval : 0f;
     }
 }

@@ -11,15 +11,16 @@ namespace CoreOverclock
 
         PlayerData data;
         Rigidbody2D rb;
-        SpriteRenderer body, core;
+        SpriteRenderer body, core, glow;
         Vector2 knock;
         float invulnerableTimer, flashTimer, wallZapCooldown;
         readonly List<Weapon> weapons = new();
 
-        public float MaxHP => data.maxHP;
+        public float MaxHP => data.maxHP + Stats.MaxHP;
         public float HP { get; private set; }
         public bool IsAlive => HP > 0f;
-        public float PickupRange => data.pickupRange;
+        public float PickupRange => data.pickupRange + Stats.PickupRange;
+        static PlayerStats Stats => GameManager.Instance.Loadout.Stats;
         public Vector2 Position => rb.position;
         public IReadOnlyList<Weapon> Weapons => weapons;
 
@@ -40,19 +41,21 @@ namespace CoreOverclock
             p.rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
             go.AddComponent<CircleCollider2D>().radius = 0.38f;
 
-            Visuals.Glow(go.transform, Palette.Player, 2.6f, 0.22f, 15);
+            p.glow = Visuals.Glow(go.transform, Palette.Player, 2.6f, 0.22f, 15);
             p.body = Visuals.Sprite("Body", go.transform, ShapeSprites.NeonCircle, Palette.Player, 20, 0.95f);
             p.core = Visuals.Sprite("Core", go.transform, ShapeSprites.Circle, Palette.Player, 21, 0.35f);
             p.HP = data.maxHP;
             return p;
         }
 
-        public bool TryAddWeapon(WeaponData weaponData)
+        /// <summary>Rebuilds the weapon mounts to match the loadout.</summary>
+        public void SyncWeapons(Loadout loadout)
         {
-            if (weapons.Count >= MaxWeapons || !weaponData) return false;
-            weapons.Add(Weapon.Create(weaponData, transform));
+            foreach (var w in weapons) Destroy(w.gameObject);
+            weapons.Clear();
+            foreach (var owned in loadout.Weapons) weapons.Add(Weapon.Create(owned.Data, transform));
             LayoutWeapons();
-            return true;
+            HP = Mathf.Min(HP, MaxHP);
         }
 
         void LayoutWeapons()
@@ -66,7 +69,7 @@ namespace CoreOverclock
 
         public void ResetForWave()
         {
-            HP = data.maxHP;
+            HP = MaxHP;
             knock = Vector2.zero;
             invulnerableTimer = 0f;
             rb.position = Vector2.zero;
@@ -84,7 +87,27 @@ namespace CoreOverclock
             bool blink = invulnerableTimer > 0f && Mathf.Repeat(Time.time * 16f, 1f) > 0.5f;
             body.color = flashTimer > 0f ? Color.white : Palette.Player;
             body.enabled = !blink;
-            float pulse = 0.32f + 0.05f * Mathf.Sin(Time.time * 6f);
+
+            // The core glows hotter with heat: cyan → orange (overclock) → blinking red (meltdown).
+            var heat = GameManager.Instance ? GameManager.Instance.Heat : null;
+            Color coreColor = Palette.Player;
+            float pulseSpeed = 6f;
+            if (heat)
+            {
+                if (heat.State == HeatState.Meltdown)
+                {
+                    coreColor = Mathf.Repeat(Time.time * 6f, 1f) > 0.5f ? Palette.Danger : Color.white;
+                    pulseSpeed = 20f;
+                }
+                else
+                {
+                    coreColor = Color.Lerp(Palette.Player, Palette.Overclock, Mathf.InverseLerp(30f, HeatSystem.OverclockThreshold, heat.Value));
+                    if (heat.State == HeatState.Overclock) pulseSpeed = 14f;
+                }
+            }
+            core.color = coreColor;
+            glow.color = new Color(coreColor.r, coreColor.g, coreColor.b, 0.22f);
+            float pulse = 0.32f + 0.06f * Mathf.Sin(Time.time * pulseSpeed);
             core.transform.localScale = Vector3.one * pulse;
         }
 
@@ -93,7 +116,7 @@ namespace CoreOverclock
             var gm = GameManager.Instance;
             bool canMove = IsAlive && gm && gm.PlayerCanMove;
             Vector2 input = canMove ? GameInput.Move : Vector2.zero;
-            rb.linearVelocity = input * data.moveSpeed + knock;
+            rb.linearVelocity = input * (data.moveSpeed * Mathf.Max(0.3f, 1f + Stats.MoveSpeedPct)) + knock;
             knock = Vector2.MoveTowards(knock, Vector2.zero, 40f * Time.fixedDeltaTime);
         }
 
@@ -135,12 +158,24 @@ namespace CoreOverclock
             CameraShake.Add(0.35f);
             TimeControl.HitStop();
 
-            if (HP <= 0f)
-            {
-                body.enabled = true;
-                FxSystem.Pulse(Position, Palette.Player, 0.5f, 4f, 0.6f);
-                Died?.Invoke();
-            }
+            if (HP <= 0f) Die();
+        }
+
+        /// <summary>Meltdown damage: ignores invulnerability, no knockback or hit-stop.</summary>
+        public void TakeTrueDamage(float amount)
+        {
+            if (!IsAlive || DevCommandLine.God) return;
+            HP = Mathf.Max(0f, HP - amount);
+            flashTimer = 0.08f;
+            DamagePopups.Show(Position, amount, Palette.Overclock, false);
+            if (HP <= 0f) Die();
+        }
+
+        void Die()
+        {
+            body.enabled = true;
+            FxSystem.Pulse(Position, Palette.Player, 0.5f, 4f, 0.6f);
+            Died?.Invoke();
         }
     }
 }

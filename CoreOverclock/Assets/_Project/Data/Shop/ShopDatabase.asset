@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5d80890970b85e4a87bf80c8280013a, type: 3}
+  m_Name: ShopDatabase
+  m_EditorClassIdentifier: Assembly-CSharp::CoreOverclock.ShopDatabase
+  weapons:
+  - {fileID: 11400000, guid: 02607d97dbbf9e345b8e7498fcef0cbf, type: 2}
+  - {fileID: 11400000, guid: 109da1fdc4483b7498d209e482832daf, type: 2}
+  - {fileID: 11400000, guid: 4f5f44ca8ea6d1444ad2fa0b690ffce4, type: 2}
+  - {fileID: 11400000, guid: fc899e92acb86f547b5e81e0ab8527a3, type: 2}
+  - {fileID: 11400000, guid: 54da01485c53ce34c813637dfec7915a, type: 2}
+  - {fileID: 11400000, guid: d8d37b1c45e031944947fceaa9ddb890, type: 2}
+  chips:
+  - {fileID: 11400000, guid: 1f33bbfab95f70742b51be5b9639dc15, type: 2}
+  - {fileID: 11400000, guid: 7b680160fda0a6b4da19bf864de03f14, type: 2}
+  - {fileID: 11400000, guid: 26dfd520d9d251f4d95f43e16d9e951d, type: 2}
+  - {fileID: 11400000, guid: 609d7cd012a692542be5b77b4c9321e8, type: 2}
+  - {fileID: 11400000, guid: ed15c331b0fa3a249b07687d067445e4, type: 2}
+  - {fileID: 11400000, guid: 3666b4e9142641d438a9e9b3a86b9617, type: 2}
+  - {fileID: 11400000, guid: 8d6a910b3fa4ac44992f56b5490fdfb0, type: 2}
+  - {fileID: 11400000, guid: 51cbf32c64b7f5a469822553773da4a6, type: 2}
+  weaponChance: 0.6

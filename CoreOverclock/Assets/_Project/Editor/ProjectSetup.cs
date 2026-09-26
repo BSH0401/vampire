@@ -16,35 +16,25 @@ namespace CoreOverclock.EditorTools
         const string ScenePath = Root + "/Scenes/Arena.unity";
         const string BuildPath = "Builds/Windows/CoreOverclock.exe";
 
-        [MenuItem("Core Overclock/Setup Project (Phase 1)")]
+        [MenuItem("Core Overclock/Setup Project")]
         public static void Setup()
         {
             // Opening a new Single scene unloads unreferenced assets, so do it before loading any data.
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             SetupLayers();
-            foreach (var dir in new[] { "Data/Weapons", "Data/Enemies", "Data/Waves", "Data/Player", "Materials", "Scenes" })
+            foreach (var dir in new[] { "Data/Weapons", "Data/Chips", "Data/Enemies", "Data/Waves", "Data/Player", "Data/Shop", "Materials", "Scenes" })
                 Directory.CreateDirectory(Path.Combine(Root, dir));
             AssetDatabase.Refresh();
 
             var material = CreateMaterial();
             var player = LoadOrCreate<PlayerData>($"{Root}/Data/Player/PlayerData.asset", _ => { });
-            var blaster = LoadOrCreate<WeaponData>($"{Root}/Data/Weapons/W_Blaster.asset", w =>
-            {
-                w.id = "blaster";
-                w.displayName = "펄스 블래스터";
-                w.description = "기본 탄도 무기. 가장 가까운 적에게 단발 탄환을 발사한다.";
-                w.tag = WeaponTag.Ballistic;
-                w.price = 15;
-                w.damage = 7f;
-                w.fireInterval = 0.5f;
-                w.range = 7.5f;
-                w.projectileSpeed = 17f;
-                w.projectileRadius = 0.13f;
-                w.knockback = 3f;
-                w.critChance = 0.1f;
-                w.critMultiplier = 2f;
-                w.projectileColor = new Color(1f, 0.85f, 0.35f);
-            });
+            var weapons = DefaultContent.Weapons(Root);
+            var blaster = weapons[0];
+            var shopDb = LoadOrCreate<ShopDatabase>($"{Root}/Data/Shop/ShopDatabase.asset", _ => { });
+            shopDb.weapons = weapons;
+            shopDb.chips = DefaultContent.Chips(Root);
+            EditorUtility.SetDirty(shopDb);
+
             var scrapBit = LoadOrCreate<EnemyData>($"{Root}/Data/Enemies/E_ScrapBit.asset", e =>
             {
                 e.id = "scrap_bit";
@@ -60,10 +50,10 @@ namespace CoreOverclock.EditorTools
             });
             var waves = LoadOrCreate<WaveTable>($"{Root}/Data/Waves/WaveTable.asset", t => FillWaves(t, scrapBit));
 
-            PopulateScene(scene, material, player, blaster, waves);
+            PopulateScene(scene, material, player, blaster, waves, shopDb);
             ConfigurePlayer();
             AssetDatabase.SaveAssets();
-            Debug.Log("[Setup] Core Overclock Phase 1 setup complete.");
+            Debug.Log("[Setup] Core Overclock setup complete.");
         }
 
         [MenuItem("Core Overclock/Build Windows")]
@@ -109,7 +99,7 @@ namespace CoreOverclock.EditorTools
             return mat;
         }
 
-        static T LoadOrCreate<T>(string path, System.Action<T> init) where T : ScriptableObject
+        internal static T LoadOrCreate<T>(string path, System.Action<T> init) where T : ScriptableObject
         {
             var asset = AssetDatabase.LoadAssetAtPath<T>(path);
             if (asset) return asset;
@@ -144,7 +134,7 @@ namespace CoreOverclock.EditorTools
             }
         }
 
-        static void PopulateScene(Scene scene, Material material, PlayerData player, WeaponData weapon, WaveTable waves)
+        static void PopulateScene(Scene scene, Material material, PlayerData player, WeaponData weapon, WaveTable waves, ShopDatabase shopDb)
         {
 
             var camGo = new GameObject("Main Camera") { tag = "MainCamera" };
@@ -163,6 +153,7 @@ namespace CoreOverclock.EditorTools
             so.FindProperty("playerData").objectReferenceValue = player;
             so.FindProperty("startingWeapon").objectReferenceValue = weapon;
             so.FindProperty("waveTable").objectReferenceValue = waves;
+            so.FindProperty("shopDatabase").objectReferenceValue = shopDb;
             so.ApplyModifiedPropertiesWithoutUndo();
             if (!player || !weapon || !waves || so.FindProperty("playerData").objectReferenceValue == null)
                 Debug.LogError("[Setup] GameManager data references are missing - re-run setup.");

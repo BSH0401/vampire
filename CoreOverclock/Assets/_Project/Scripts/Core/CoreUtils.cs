@@ -11,6 +11,10 @@ namespace CoreOverclock
         public bool Crit;
         public Vector2 Direction;
         public float Knockback;
+        public float SlowAmount, SlowDuration;
+        public float BurnDps, BurnDuration;
+        /// <summary>Damage-over-time tick: no flash, knockback or hit-stop.</summary>
+        public bool IsDot;
     }
 
     public interface IDamageable
@@ -87,11 +91,13 @@ namespace CoreOverclock
         public static readonly Color Danger = new(1f, 0.25f, 0.3f);
         public static readonly Color Tower = new(0.35f, 0.55f, 1f);
         public static readonly Color Text = new(0.9f, 0.95f, 1f);
+        public static readonly Color Overclock = new(1f, 0.55f, 0.15f);
+        public static readonly Color Chip = new(0.55f, 1f, 0.6f);
     }
 
     public static class GameInput
     {
-        static InputAction move, pause;
+        static InputAction move, pause, vent;
 
         public static void Init()
         {
@@ -110,6 +116,13 @@ namespace CoreOverclock
             pause.AddBinding("<Keyboard>/escape");
             pause.AddBinding("<Gamepad>/start");
             pause.Enable();
+
+            vent = new InputAction("Vent", InputActionType.Button);
+            vent.AddBinding("<Keyboard>/space");
+            vent.AddBinding("<Mouse>/rightButton");
+            vent.AddBinding("<Gamepad>/buttonSouth");
+            vent.AddBinding("<Gamepad>/rightShoulder");
+            vent.Enable();
         }
 
         public static Vector2 Move
@@ -122,5 +135,6 @@ namespace CoreOverclock
         }
 
         public static bool PausePressed => pause.WasPressedThisFrame();
+        public static bool VentPressed => vent.WasPressedThisFrame();
     }
 }

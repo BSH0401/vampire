@@ -11,6 +11,7 @@ namespace CoreOverclock
         Pool<Projectile> pool;
         readonly List<Projectile> active = new();
         readonly List<RaycastHit2D> hits = new();
+        readonly List<Collider2D> overlaps = new();
         ContactFilter2D filter;
 
         public static ProjectileSystem Create(Transform parent)
@@ -35,11 +36,11 @@ namespace CoreOverclock
             return p;
         }
 
-        public static void Spawn(WeaponData data, Vector2 position, Vector2 direction, bool crit)
+        public static void Spawn(in ShotParams shot, Vector2 position, Vector2 direction, bool crit)
         {
             if (!instance) return;
             var p = instance.pool.Get();
-            p.Launch(data, position, direction, crit);
+            p.Launch(shot, position, direction, crit);
             instance.active.Add(p);
         }
 
@@ -48,6 +49,27 @@ namespace CoreOverclock
             if (!instance) return;
             for (int i = instance.active.Count - 1; i >= 0; i--) instance.pool.Release(instance.active[i]);
             instance.active.Clear();
+        }
+
+        /// <summary>Area damage for Explosive weapons.</summary>
+        public static void Explode(Vector2 center, float radius, float damage, float knockback, bool crit, Color color)
+        {
+            if (!instance) return;
+            FxSystem.Pulse(center, color, 0.3f, radius * 2.4f, 0.3f);
+            FxSystem.Pulse(center, Color.white, 0.2f, radius * 1.2f, 0.15f);
+            CameraShake.Add(crit ? 0.25f : 0.1f);
+
+            int n = Physics2D.OverlapCircle(center, radius, instance.filter, instance.overlaps);
+            for (int i = 0; i < n; i++)
+            {
+                if (!instance.overlaps[i].TryGetComponent(out IDamageable target) || !target.IsAlive) continue;
+                Vector2 to = target.Position - center;
+                target.TakeDamage(new DamageInfo
+                {
+                    Amount = damage, Crit = crit, Knockback = knockback,
+                    Direction = to.sqrMagnitude > 0.001f ? to.normalized : Vector2.up,
+                });
+            }
         }
 
         void Update()
@@ -69,27 +91,29 @@ namespace CoreOverclock
         public SpriteRenderer Glow;
 
         readonly HashSet<Collider2D> alreadyHit = new();
-        WeaponData data;
+        ShotParams shot;
         Vector2 position, direction;
         float life, damage;
-        int pierceLeft;
+        int pierceLeft, bouncesLeft;
         bool crit;
 
-        public void Launch(WeaponData weapon, Vector2 pos, Vector2 dir, bool isCrit)
+        public void Launch(in ShotParams s, Vector2 pos, Vector2 dir, bool isCrit)
         {
-            data = weapon;
+            shot = s;
             position = pos;
             direction = dir;
             crit = isCrit;
-            life = weapon.projectileLifetime;
-            pierceLeft = weapon.pierce;
-            damage = weapon.damage * (isCrit ? weapon.critMultiplier : 1f);
+            life = s.Weapon.projectileLifetime;
+            pierceLeft = s.Pierce;
+            bouncesLeft = s.Bounces;
+            damage = s.Damage * (isCrit ? s.Weapon.critMultiplier : 1f);
             alreadyHit.Clear();
 
-            var color = isCrit ? Color.white : weapon.projectileColor;
-            Body.color = color;
-            Glow.color = new Color(weapon.projectileColor.r, weapon.projectileColor.g, weapon.projectileColor.b, 0.35f);
-            transform.localScale = Vector3.one * (weapon.projectileRadius * 2f * (isCrit ? 1.4f : 1f));
+            var baseColor = s.Overclocked ? Color.Lerp(s.Weapon.projectileColor, Palette.Overclock, 0.6f) : s.Weapon.projectileColor;
+            Body.color = isCrit ? Color.white : baseColor;
+            Glow.color = new Color(baseColor.r, baseColor.g, baseColor.b, 0.35f);
+            float size = s.Weapon.projectileRadius * 2f * (isCrit ? 1.4f : 1f) * (s.Overclocked ? 1.2f : 1f);
+            transform.localScale = Vector3.one * size;
             transform.SetPositionAndRotation(pos, Quaternion.identity);
         }
 
@@ -99,29 +123,55 @@ namespace CoreOverclock
             var gm = GameManager.Instance;
             if (!gm || gm.State != GameState.Combat) return false;
 
-            float distance = data.projectileSpeed * dt;
-            int n = Physics2D.CircleCast(position, data.projectileRadius, direction, filter, hits, distance);
+            float distance = shot.Speed * dt;
+            int n = Physics2D.CircleCast(position, shot.Weapon.projectileRadius, direction, filter, hits, distance);
             for (int i = 0; i < n; i++)
             {
                 var col = hits[i].collider;
                 if (!alreadyHit.Add(col)) continue;
                 if (!col.TryGetComponent(out IDamageable target) || !target.IsAlive) continue;
 
+                if (shot.ExplosionRadius > 0f)
+                {
+                    Explode(hits[i].centroid);
+                    return false;
+                }
+
                 target.TakeDamage(new DamageInfo
                 {
-                    Amount = damage, Crit = crit, Direction = direction, Knockback = data.knockback,
+                    Amount = damage, Crit = crit, Direction = direction, Knockback = shot.Knockback,
+                    SlowAmount = shot.Weapon.slowAmount, SlowDuration = shot.Weapon.slowDuration,
+                    BurnDps = shot.BurnDps, BurnDuration = shot.Weapon.burnDuration,
                 });
                 if (--pierceLeft < 0)
                 {
-                    FxSystem.Pulse(hits[i].point, data.projectileColor, 0.1f, 0.6f, 0.12f);
+                    FxSystem.Pulse(hits[i].point, shot.Weapon.projectileColor, 0.1f, 0.6f, 0.12f);
                     return false;
                 }
             }
 
             position += direction * distance;
+            if (bouncesLeft > 0 && !Arena.Contains(position)) Bounce();
             transform.position = position;
             life -= dt;
-            return life > 0f && Arena.Contains(position, 0.5f);
+
+            if (life > 0f && Arena.Contains(position, 0.5f)) return true;
+            if (shot.ExplosionRadius > 0f && life <= 0f) Explode(position);
+            return false;
         }
+
+        void Bounce()
+        {
+            var h = Arena.HalfSize;
+            if (Mathf.Abs(position.x) > h.x) { direction.x = -direction.x; position.x = Mathf.Clamp(position.x, -h.x, h.x); }
+            if (Mathf.Abs(position.y) > h.y) { direction.y = -direction.y; position.y = Mathf.Clamp(position.y, -h.y, h.y); }
+            bouncesLeft--;
+            alreadyHit.Clear();
+            life = Mathf.Max(life, shot.Weapon.projectileLifetime * 0.6f);
+            FxSystem.Pulse(position, shot.Weapon.projectileColor, 0.1f, 0.5f, 0.1f);
+        }
+
+        void Explode(Vector2 at) =>
+            ProjectileSystem.Explode(at, shot.ExplosionRadius, damage, shot.Knockback, crit, shot.Weapon.projectileColor);
     }
 }

@@ -10,30 +10,31 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 946a8ab372925704eb9ebd79c4590260, type: 3}
-  m_Name: W_Blaster
+  m_Name: W_Laser
   m_EditorClassIdentifier: Assembly-CSharp::CoreOverclock.WeaponData
-  id: blaster
-  displayName: "\uD384\uC2A4 \uBE14\uB798\uC2A4\uD130"
-  description: "\uAE30\uBCF8 \uB2E8\uBC1C \uD0C4\uB3C4 \uBB34\uAE30."
-  tag: 0
+  id: laser
+  displayName: "\uD384\uC2A4 \uB808\uC774\uC800"
+  description: "\uCD08\uACE0\uC18D \uC5F0\uC0AC. \uB9DE\uC740 \uC801\uC5D0\uAC8C
+    \uB3C4\uD2B8 \uD53C\uD574."
+  tag: 1
   tier: 1
-  price: 15
-  damage: 7
-  fireInterval: 0.5
-  range: 7.5
+  price: 24
+  damage: 2.5
+  fireInterval: 0.18
+  range: 6.5
   projectileCount: 1
   spreadAngle: 8
   pierce: 0
-  knockback: 3
-  critChance: 0.1
+  knockback: 0.5
+  critChance: 0.05
   critMultiplier: 2
-  projectileSpeed: 17
-  projectileRadius: 0.13
-  projectileLifetime: 1.2
-  projectileColor: {r: 1, g: 0.85, b: 0.35, a: 1}
-  heatPerShot: 1.5
+  projectileSpeed: 24
+  projectileRadius: 0.08
+  projectileLifetime: 0.6
+  projectileColor: {r: 1, g: 0.35, b: 0.9, a: 1}
+  heatPerShot: 0.6
   slowAmount: 0
   slowDuration: 1.5
-  burnDamagePerSecond: 0
+  burnDamagePerSecond: 3
   burnDuration: 2
   explosionRadius: 0

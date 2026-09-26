@@ -18,6 +18,7 @@ namespace CoreOverclock
         Action<Enemy> release;
         Vector2 knock;
         float hp, speedMultiplier, flashTimer;
+        float slowAmount, slowTimer, burnDps, burnTimer, burnTick;
         bool frozen, spawned;
 
         public EnemyData Data { get; private set; }
@@ -50,6 +51,7 @@ namespace CoreOverclock
             speedMultiplier = speedMul;
             knock = Vector2.zero;
             flashTimer = 0f;
+            slowAmount = slowTimer = burnDps = burnTimer = burnTick = 0f;
             frozen = false;
             spawned = true;
 
@@ -75,7 +77,8 @@ namespace CoreOverclock
             Vector2 dir = to.sqrMagnitude > 0.0001f ? to.normalized : Vector2.zero;
 
             // Phase 1: every behaviour falls back to the straight chaser AI (스크랩 비트).
-            rb.linearVelocity = dir * (Data.moveSpeed * speedMultiplier) + knock;
+            float slow = slowTimer > 0f ? 1f - slowAmount : 1f;
+            rb.linearVelocity = dir * (Data.moveSpeed * speedMultiplier * slow) + knock;
             knock = Vector2.MoveTowards(knock, Vector2.zero, 25f * Time.fixedDeltaTime);
             if (dir != Vector2.zero)
                 bodyTransform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg);
@@ -84,16 +87,52 @@ namespace CoreOverclock
         void Update()
         {
             if (!spawned || frozen) return;
-            flashTimer -= Time.deltaTime;
-            body.color = flashTimer > 0f ? Color.white : Data.color;
+            float dt = Time.deltaTime;
+            flashTimer -= dt;
+            slowTimer -= dt;
+
+            if (burnTimer > 0f)
+            {
+                burnTimer -= dt;
+                burnTick -= dt;
+                if (burnTick <= 0f)
+                {
+                    burnTick += 0.5f;
+                    TakeDamage(new DamageInfo { Amount = burnDps * 0.5f, IsDot = true });
+                    if (!spawned) return;
+                }
+            }
+
+            var c = Data.color;
+            if (slowTimer > 0f) c = Color.Lerp(c, WeaponTags.ColorOf(WeaponTag.Cryo), 0.6f);
+            if (burnTimer > 0f) c = Color.Lerp(c, WeaponTags.ColorOf(WeaponTag.Energy), 0.5f);
+            body.color = flashTimer > 0f ? Color.white : c;
         }
 
         public void TakeDamage(in DamageInfo info)
         {
             if (!IsAlive) return;
             hp -= info.Amount;
+            if (info.IsDot)
+            {
+                DamagePopups.Show(Position, info.Amount, WeaponTags.ColorOf(WeaponTag.Energy), false);
+                if (hp <= 0f) Die();
+                return;
+            }
+
             flashTimer = FlashTime;
             knock += info.Direction * (info.Knockback * (1f - Data.knockbackResistance));
+            if (info.SlowAmount > 0f)
+            {
+                slowAmount = slowTimer > 0f ? Mathf.Max(slowAmount, info.SlowAmount) : info.SlowAmount;
+                slowTimer = Mathf.Max(slowTimer, info.SlowDuration);
+            }
+            if (info.BurnDps > 0f)
+            {
+                if (burnTimer <= 0f) burnTick = 0.5f;
+                burnDps = Mathf.Max(burnTimer > 0f ? burnDps : 0f, info.BurnDps);
+                burnTimer = Mathf.Max(burnTimer, info.BurnDuration);
+            }
 
             DamagePopups.Show(Position, info.Amount, info.Crit ? new Color(1f, 0.85f, 0.2f) : Color.white, info.Crit);
             if (info.Crit)

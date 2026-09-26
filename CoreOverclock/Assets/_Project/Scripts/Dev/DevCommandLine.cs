@@ -12,12 +12,16 @@ namespace CoreOverclock
     ///   -startwave N          begin at wave N
     ///   -shots DIR            save screenshots to DIR at the times in -shottimes (default "5,12")
     ///   -quitafter N          quit after N real seconds
+    ///   -scrap N              start with N scrap
+    ///   -autobuy              autopilot buys whatever it can afford in the shop
+    ///   -novent               autopilot never uses Vent Out
     /// </summary>
     public class DevCommandLine : MonoBehaviour
     {
         public static bool Enabled, Autopilot, God;
         public static float WaveTimeOverride = -1f;
-        public static int StartWave = 1;
+        public static int StartWave = 1, StartScrap;
+        public static bool AutoBuy, NoVent;
         static string shotDir;
         static float[] shotTimes = { 5f, 12f };
         static float quitAfter = -1f;
@@ -27,7 +31,8 @@ namespace CoreOverclock
 
         public static void Parse()
         {
-            Enabled = Autopilot = God = false;
+            Enabled = Autopilot = God = AutoBuy = NoVent = false;
+            StartScrap = 0;
             WaveTimeOverride = -1f;
             StartWave = 1;
             shotDir = null;
@@ -41,6 +46,9 @@ namespace CoreOverclock
                 {
                     case "-autopilot": Autopilot = Enabled = true; break;
                     case "-god": God = true; break;
+                    case "-scrap": StartScrap = (int)ParseFloat(next, 0f); break;
+                    case "-autobuy": AutoBuy = true; Enabled = true; break;
+                    case "-novent": NoVent = true; break;
                     case "-wavetime": WaveTimeOverride = ParseFloat(next, -1f); Enabled = true; break;
                     case "-startwave": StartWave = (int)ParseFloat(next, 1f); break;
                     case "-shots": shotDir = next; Enabled = true; break;
@@ -72,13 +80,21 @@ namespace CoreOverclock
             {
                 Directory.CreateDirectory(shotDir);
                 ScreenCapture.CaptureScreenshot(Path.Combine(shotDir, $"shot_{nextShot}.png"));
-                Debug.Log($"[Dev] Screenshot {nextShot} at {t:F1}s, state={GameManager.Instance.State}, enemies={Enemy.Active.Count}, scrap={GameManager.Instance.Scrap}");
+                var g = GameManager.Instance;
+                Debug.Log($"[Dev] Screenshot {nextShot} at {t:F1}s, wave={g.Wave} state={g.State}, enemies={Enemy.Active.Count}, scrap={g.Scrap}, heat={g.Heat.Value:F0} ({g.Heat.State}), weapons={g.Loadout.Weapons.Count}, heatMul={g.Loadout.HeatGenMultiplier:F2}");
                 nextShot++;
             }
 
             // Autopilot presses "next wave" by itself.
             var gm = GameManager.Instance;
+            float prev = intermissionTime;
             intermissionTime = gm.State == GameState.Intermission ? intermissionTime + Time.unscaledDeltaTime : 0f;
+            if (AutoBuy && gm.State == GameState.Intermission && Mathf.Floor(prev * 2f) != Mathf.Floor(intermissionTime * 2f))
+            {
+                bool bought = false;
+                for (int i = 0; i < Shop.SlotCount && !bought; i++) bought = gm.Shop.Buy(i);
+                if (!bought && intermissionTime < 1.5f) gm.Shop.Reroll();
+            }
             if (Autopilot && intermissionTime > 3f) gm.NextWave();
 
             if (quitAfter > 0f && t >= quitAfter)

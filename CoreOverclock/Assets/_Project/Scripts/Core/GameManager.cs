@@ -18,16 +18,22 @@ namespace CoreOverclock
         [SerializeField] PlayerData playerData;
         [SerializeField] WeaponData startingWeapon;
         [SerializeField] WaveTable waveTable;
+        [SerializeField] ShopDatabase shopDatabase;
 
         EnemySpawner spawner;
         ScrapSystem scrap;
         HUD hud;
+        ShopUI shopUI;
         DataTower[] towers;
         int waveKills, waveScrapStart;
+        float lastOverclockBanner = -10f;
 
         public static GameManager Instance { get; private set; }
         public GameState State { get; private set; }
         public Player Player { get; private set; }
+        public Loadout Loadout { get; private set; }
+        public HeatSystem Heat { get; private set; }
+        public Shop Shop { get; private set; }
         public int Wave { get; private set; }
         public int TotalWaves => waveTable.Count;
         public float TimeLeft { get; private set; }
@@ -47,6 +53,10 @@ namespace CoreOverclock
             DevCommandLine.Parse();
 
             gameObject.AddComponent<TimeControl>();
+            Heat = gameObject.AddComponent<HeatSystem>();
+            Heat.StateChanged += OnHeatStateChanged;
+            Loadout = new Loadout();
+            Loadout.AddWeapon(startingWeapon, startingWeapon.price);
             var cam = Camera.main;
             if (cam)
             {
@@ -57,8 +67,9 @@ namespace CoreOverclock
             var world = new GameObject("World").transform;
             Arena.Create(world);
             Player = Player.Create(playerData, world);
-            Player.TryAddWeapon(startingWeapon);
+            Player.SyncWeapons(Loadout);
             Player.Died += OnPlayerDied;
+            Loadout.Changed += () => Player.SyncWeapons(Loadout);
 
             ProjectileSystem.Create(world);
             FxSystem.Create(world);
@@ -69,6 +80,9 @@ namespace CoreOverclock
 
             hud = HUD.Create(this);
             DamagePopups.Create(hud.Canvas);
+            Shop = new Shop(shopDatabase, Loadout, this);
+            shopUI = ShopUI.Create(hud.Canvas, this, Shop, Loadout);
+            Scrap += DevCommandLine.StartScrap;
 
             if (DevCommandLine.Enabled) gameObject.AddComponent<DevCommandLine>();
         }
@@ -99,9 +113,11 @@ namespace CoreOverclock
             waveScrapStart = Scrap;
 
             Player.ResetForWave();
+            Heat.ResetForWave();
             scrap.ResetForWave();
             PlaceTowers();
             hud.HidePanels();
+            shopUI.Hide();
             State = GameState.Combat;
             spawner.Begin(def);
 
@@ -149,8 +165,10 @@ namespace CoreOverclock
                 yield break;
             }
 
+            // 코어 작업실
             State = GameState.Intermission;
-            hud.ShowWaveClear(Wave, waveKills, Scrap - waveScrapStart, Scrap);
+            Shop.Open(Wave + 1);
+            shopUI.Show(Wave, waveKills, Scrap - waveScrapStart);
         }
 
         public void NextWave()
@@ -195,5 +213,24 @@ namespace CoreOverclock
         }
 
         public void AddScrap(int amount) => Scrap += amount;
+
+        public bool TrySpendScrap(int amount)
+        {
+            if (amount > Scrap) return false;
+            Scrap -= amount;
+            return true;
+        }
+
+        void OnHeatStateChanged(HeatState s)
+        {
+            if (DevCommandLine.Enabled) Debug.Log($"[Dev] Heat -> {s} at t={Time.time:F1} hp={Player.HP} weapons={Loadout.Weapons.Count}");
+            if (State != GameState.Combat) return;
+            if (s == HeatState.Overclock && Time.time - lastOverclockBanner > 4f)
+            {
+                lastOverclockBanner = Time.time;
+                hud.ShowBanner("OVERCLOCK", Palette.Overclock, 1f);
+            }
+            else if (s == HeatState.Meltdown) hud.ShowBanner("MELTDOWN", Palette.Danger, 1.5f);
+        }
     }
 }

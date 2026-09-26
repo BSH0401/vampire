@@ -7,11 +7,14 @@ namespace CoreOverclock
     public class HUD : MonoBehaviour
     {
         GameManager gm;
-        Text waveLabel, timerLabel, hpLabel, scrapLabel, killLabel, banner, hint;
-        RectTransform hpFill;
-        GameObject waveClearPanel, gameOverPanel, pausePanel;
-        Text waveClearTitle, waveClearStats, gameOverTitle, gameOverStats;
-        Button nextButton, restartButton, resumeButton;
+        Text waveLabel, timerLabel, hpLabel, scrapLabel, killLabel, banner;
+        Text heatLabel, heatState, ventLabel;
+        RectTransform hpFill, heatFill;
+        Image heatFillImage, ventFillImage;
+        RectTransform ventFill;
+        GameObject gameOverPanel, pausePanel;
+        Text gameOverTitle, gameOverStats;
+        Button restartButton, resumeButton;
         float bannerTimer;
 
         public Canvas Canvas { get; private set; }
@@ -51,20 +54,39 @@ namespace CoreOverclock
 
             banner = UIFactory.Label(UIFactory.Rect("Banner", root, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 180f), new Vector2(1200f, 120f)),
                 "", 80, Color.white);
-            hint = UIFactory.Label(UIFactory.Rect("Hint", root, bottom, bottom, new Vector2(0f, 18f), new Vector2(1400f, 36f)),
-                "이동: WASD / 방향키 / 좌스틱   ·   공격: 자동   ·   일시정지: ESC / Start", 22, new Color(0.6f, 0.65f, 0.8f, 0.8f));
-
-            waveClearPanel = BuildPanel("WaveClearPanel", out waveClearTitle, out waveClearStats);
-            nextButton = UIFactory.Button(waveClearPanel.transform, "다음 웨이브 ▶", new Vector2(0f, -170f), new Vector2(420f, 80f), gm.NextWave);
+            BuildHeatGauge(root, bottom);
 
             gameOverPanel = BuildPanel("GameOverPanel", out gameOverTitle, out gameOverStats);
             restartButton = UIFactory.Button(gameOverPanel.transform, "다시 시작", new Vector2(0f, -170f), new Vector2(420f, 80f), gm.Restart);
 
             pausePanel = BuildPanel("PausePanel", out var pauseTitle, out var pauseStats);
             pauseTitle.text = "일시정지";
-            pauseStats.text = "";
+            pauseStats.text = "<size=24>이동: WASD / 방향키 / 좌스틱\n긴급 방열: Space / 우클릭 / A·RB\n일시정지: ESC / Start</size>";
+            pauseStats.rectTransform.anchoredPosition = new Vector2(0f, -120f);
             resumeButton = UIFactory.Button(pausePanel.transform, "계속하기", new Vector2(0f, -40f), new Vector2(420f, 80f), () => gm.SetPaused(false));
             UIFactory.Button(pausePanel.transform, "처음부터", new Vector2(0f, -140f), new Vector2(420f, 80f), gm.Restart);
+        }
+
+        void BuildHeatGauge(Transform root, Vector2 bottom)
+        {
+            // Heat gauge (기획서 2장) sits under the arena; the 70% mark separates safe/overclock.
+            const float width = 760f;
+            heatLabel = UIFactory.Label(UIFactory.Rect("HeatLabel", root, bottom, bottom, new Vector2(-width / 2f - 70f, 30f), new Vector2(120f, 36f)),
+                "HEAT", 26, Palette.Overclock, TextAnchor.MiddleRight);
+            var back = UIFactory.Rect("HeatBack", root, bottom, bottom, new Vector2(0f, 30f), new Vector2(width, 26f));
+            UIFactory.Image(back, new Color(0.08f, 0.08f, 0.12f, 0.95f));
+            heatFill = UIFactory.Stretch("HeatFill", back);
+            heatFillImage = UIFactory.Image(heatFill, Palette.Player);
+            var mark = UIFactory.Rect("OverclockMark", back, new Vector2(HeatSystem.OverclockThreshold / HeatSystem.Max, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(3f, 34f));
+            UIFactory.Image(mark, Color.white);
+            heatState = UIFactory.Label(UIFactory.Rect("HeatState", root, bottom, bottom, new Vector2(width / 2f + 110f, 30f), new Vector2(200f, 36f)),
+                "안전", 24, Palette.Text, TextAnchor.MiddleLeft);
+
+            var ventBack = UIFactory.Rect("VentBack", root, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-32f, 20f), new Vector2(300f, 44f));
+            UIFactory.Image(ventBack, new Color(0.08f, 0.1f, 0.16f, 0.95f));
+            ventFill = UIFactory.Stretch("VentFill", ventBack);
+            ventFillImage = UIFactory.Image(ventFill, new Color(0.3f, 0.8f, 1f, 0.45f));
+            ventLabel = UIFactory.Label(UIFactory.Stretch("VentLabel", ventBack), "", 22, Palette.Text);
         }
 
         GameObject BuildPanel(string name, out Text title, out Text stats)
@@ -102,6 +124,8 @@ namespace CoreOverclock
             scrapLabel.text = $"◆ {gm.Scrap}";
             killLabel.text = $"처치 {gm.TotalKills}";
 
+            UpdateHeat();
+
             if (bannerTimer > 0f)
             {
                 bannerTimer -= Time.unscaledDeltaTime;
@@ -111,19 +135,41 @@ namespace CoreOverclock
             }
         }
 
+        void UpdateHeat()
+        {
+            var heat = gm.Heat;
+            heatFill.anchorMax = new Vector2(heat.Ratio, 1f);
+            string pct = $"{Mathf.RoundToInt(heat.Value)}%";
+            switch (heat.State)
+            {
+                case HeatState.Meltdown:
+                    bool on = Mathf.Repeat(Time.unscaledTime * 5f, 1f) > 0.5f;
+                    heatFillImage.color = on ? Palette.Danger : Color.white;
+                    heatState.text = $"<color=#FF4050>과열! {heat.MeltdownTimeLeft:0.0}s</color>";
+                    break;
+                case HeatState.Overclock:
+                    heatFillImage.color = Color.Lerp(Palette.Overclock, Color.white, 0.25f * Mathf.Abs(Mathf.Sin(Time.time * 8f)));
+                    heatState.text = $"<color=#FF9A3C>오버클럭 {pct}</color>";
+                    break;
+                default:
+                    heatFillImage.color = Color.Lerp(Palette.Player, Palette.Overclock, heat.Ratio / 0.7f * 0.6f);
+                    heatState.text = $"안전 {pct}";
+                    break;
+            }
+
+            float ventRatio = 1f - heat.VentCooldownLeft / HeatSystem.VentCooldown;
+            ventFill.anchorMax = new Vector2(ventRatio, 1f);
+            if (heat.State == HeatState.Meltdown) ventLabel.text = "<color=#FF4050>방열 불가</color>";
+            else if (heat.VentReady) ventLabel.text = "긴급 방열 준비 [Space]";
+            else ventLabel.text = $"긴급 방열 {heat.VentCooldownLeft:0}s";
+            ventFillImage.color = heat.VentReady ? new Color(0.3f, 0.9f, 1f, 0.6f) : new Color(0.3f, 0.6f, 0.8f, 0.35f);
+        }
+
         public void ShowBanner(string text, Color color, float duration = 1.6f)
         {
             banner.text = text;
             banner.color = color;
             bannerTimer = duration;
-        }
-
-        public void ShowWaveClear(int wave, int kills, int scrapGained, int totalScrap)
-        {
-            waveClearTitle.text = $"WAVE {wave} CLEAR";
-            waveClearStats.text =
-                $"처치: {kills}\n획득 스크랩: +{scrapGained}   (보유 ◆ {totalScrap})\n\n<color=#7f8aa8><size=24>코어 작업실(상점)은 Phase 2에서 연결됩니다</size></color>";
-            Show(waveClearPanel, nextButton);
         }
 
         public void ShowGameOver(bool victory, int wave, int kills, int totalScrap)
@@ -142,7 +188,6 @@ namespace CoreOverclock
 
         public void HidePanels()
         {
-            waveClearPanel.SetActive(false);
             gameOverPanel.SetActive(false);
             pausePanel.SetActive(false);
         }
