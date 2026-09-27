@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -14,6 +15,7 @@ namespace CoreOverclock
         readonly List<Collider2D> overlaps = new();
         ContactFilter2D filter;
         int clearVersion; // bumped by ClearAll so Update can bail if a hit ended the wave mid-loop
+        public static int ClearVersion => instance ? instance.clearVersion : 0;
 
         public static ProjectileSystem Create(Transform parent)
         {
@@ -54,10 +56,14 @@ namespace CoreOverclock
         }
 
         /// <summary>Area damage for Explosive weapons.</summary>
+        /// <param name="chain">EMP 탄: number of nearby enemies zapped afterwards.</param>
+        /// <param name="bomblets">굴절 포격: delayed secondary explosions around the blast.</param>
         public static void Explode(Vector2 center, float radius, float damage, float knockback, bool crit, Color color,
-            float slowAmount = 0f, float slowDuration = 0f, float burnDps = 0f, float burnDuration = 0f)
+            float slowAmount = 0f, float slowDuration = 0f, float burnDps = 0f, float burnDuration = 0f, int chain = 0, int bomblets = 0)
         {
             if (!instance) return;
+            if (bomblets > 0)
+                instance.StartCoroutine(instance.BombletRoutine(center, radius, damage * Fusions.PrismBombletRatio, knockback, color, bomblets));
             FxSystem.Pulse(center, color, 0.3f, radius * 2.4f, 0.3f);
             FxSystem.Pulse(center, Color.white, 0.2f, radius * 1.2f, 0.15f);
             CameraShake.Add(crit ? 0.25f : 0.1f);
@@ -75,6 +81,43 @@ namespace CoreOverclock
                     Direction = to.sqrMagnitude > 0.001f ? to.normalized : Vector2.up,
                     SlowAmount = slowAmount, SlowDuration = slowDuration, BurnDps = burnDps, BurnDuration = burnDuration,
                 });
+            }
+            if (chain > 0) ChainLightning(center, chain, damage * Fusions.EmpDamageRatio);
+        }
+
+        static readonly List<Enemy> chainTargets = new();
+
+        static void ChainLightning(Vector2 center, int count, float damage)
+        {
+            chainTargets.Clear();
+            float rangeSqr = Fusions.EmpRange * Fusions.EmpRange;
+            foreach (var e in Enemy.Active)
+                if (e.IsAlive && (e.Position - center).sqrMagnitude < rangeSqr) chainTargets.Add(e);
+            chainTargets.Sort((a, b) => (a.Position - center).sqrMagnitude.CompareTo((b.Position - center).sqrMagnitude));
+
+            var color = WeaponTags.ColorOf(WeaponTag.Energy);
+            Vector2 from = center;
+            for (int i = 0; i < chainTargets.Count && i < count; i++)
+            {
+                var e = chainTargets[i];
+                if (!e.IsAlive) continue;
+                FxSystem.Bolt(from, e.Position, color);
+                from = e.Position;
+                e.TakeDamage(new DamageInfo { Amount = damage, Direction = Vector2.up, BurnDps = damage * 0.5f, BurnDuration = 1.5f });
+            }
+            if (chainTargets.Count > 0) AudioManager.Play(SfxId.ShootEnergy, 0.3f, 0.2f);
+        }
+
+        IEnumerator BombletRoutine(Vector2 center, float radius, float damage, float knockback, Color color, int count)
+        {
+            int version = clearVersion;
+            for (int i = 0; i < count; i++)
+            {
+                yield return new WaitForSeconds(0.12f);
+                var gm = GameManager.Instance;
+                if (version != clearVersion || !gm || gm.State != GameState.Combat) yield break;
+                Vector2 at = center + Random.insideUnitCircle.normalized * radius * Random.Range(0.7f, 1.2f);
+                Explode(at, radius * 0.5f, damage, knockback * 0.5f, false, Color.Lerp(color, WeaponTags.ColorOf(WeaponTag.Energy), 0.5f));
             }
         }
 
@@ -146,12 +189,22 @@ namespace CoreOverclock
                     return false;
                 }
 
+                bool slowed = target is Enemy enemy && enemy.Slowed;
+                int version = ProjectileSystem.ClearVersion;
                 target.TakeDamage(new DamageInfo
                 {
-                    Amount = damage, Crit = crit, Direction = direction, Knockback = shot.Knockback,
-                    SlowAmount = shot.Weapon.slowAmount, SlowDuration = shot.Weapon.slowDuration,
-                    BurnDps = shot.BurnDps, BurnDuration = shot.Weapon.burnDuration,
+                    Amount = damage * (slowed ? 1f + shot.SlowedDamageBonus : 1f), Crit = crit, Direction = direction, Knockback = shot.Knockback,
+                    SlowAmount = shot.SlowAmount, SlowDuration = shot.SlowDuration,
+                    BurnDps = shot.BurnDps, BurnDuration = shot.BurnDuration,
                 });
+                if (version != ProjectileSystem.ClearVersion) return false; // that hit ended the wave
+                if (slowed && shot.SlowedPierceRamp > 0f) damage *= 1f + shot.SlowedPierceRamp;
+                if (crit && shot.CritExplosionRadius > 0f)
+                {
+                    ProjectileSystem.Explode(hits[i].point, shot.CritExplosionRadius, damage * Fusions.BulletHellDamageRatio, shot.Knockback, false,
+                        WeaponTags.ColorOf(WeaponTag.Explosive));
+                    if (version != ProjectileSystem.ClearVersion) return false;
+                }
                 if (--pierceLeft < 0)
                 {
                     FxSystem.Pulse(hits[i].point, shot.Weapon.projectileColor, 0.1f, 0.6f, 0.12f);
@@ -182,6 +235,6 @@ namespace CoreOverclock
 
         void Explode(Vector2 at) =>
             ProjectileSystem.Explode(at, shot.ExplosionRadius, damage, shot.Knockback, crit, shot.Weapon.projectileColor,
-                shot.Weapon.slowAmount, shot.Weapon.slowDuration, shot.BurnDps, shot.Weapon.burnDuration);
+                shot.SlowAmount, shot.SlowDuration, shot.BurnDps, shot.BurnDuration, shot.ChainLightning, shot.Bomblets);
     }
 }

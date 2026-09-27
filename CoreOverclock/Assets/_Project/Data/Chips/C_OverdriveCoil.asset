@@ -18,6 +18,7 @@ MonoBehaviour:
     \uB04C\uC5B4\uC62C\uB9B0\uB2E4."
   tier: 2
   price: 28
+  unlockCost: 20
   modifiers:
   - stat: 12
     value: 0.25

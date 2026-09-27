@@ -17,6 +17,7 @@ MonoBehaviour:
   description: 
   tier: 1
   price: 15
+  unlockCost: 0
   modifiers:
   - stat: 1
     value: 0.12

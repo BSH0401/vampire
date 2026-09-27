@@ -8,8 +8,16 @@ namespace CoreOverclock
         public WeaponData Weapon;
         public float Damage, Speed, Knockback, CritChance, Lifetime;
         public int Pierce, Bounces;
-        public float BurnDps, ExplosionRadius;
+        public float BurnDps, BurnDuration, ExplosionRadius;
+        public float SlowAmount, SlowDuration;
         public bool Overclocked;
+
+        // 퓨전 effects (0 = off)
+        public float SlowedDamageBonus;   // 열충격: extra damage vs slowed enemies
+        public float SlowedPierceRamp;    // 절대영도: damage gain per slowed enemy pierced
+        public float CritExplosionRadius; // 탄막 지옥
+        public int ChainLightning;        // EMP 탄
+        public int Bomblets;              // 굴절 포격
     }
 
     /// <summary>Auto-aiming weapon mounted around the player (기획서 4.1: 100% 자동 조작).</summary>
@@ -73,7 +81,7 @@ namespace CoreOverclock
             float rate = 1f + loadout.Stats.FireRatePct + (Data.tag == WeaponTag.Energy ? loadout.Synergy.EnergyFireRateBonus : 0f);
             cooldown = Data.fireInterval / Mathf.Max(0.2f, rate);
             Fire(origin + dir * MuzzleOffset, dir, BuildShot(loadout, heat));
-            heat.AddShotHeat(Data.heatPerShot);
+            heat.AddShotHeat(Data.heatPerShot * (loadout.IsTwin(Data) ? 1f - Fusions.TwinHeat : 1f));
         }
 
         ShotParams BuildShot(Loadout loadout, HeatSystem heat)
@@ -81,8 +89,8 @@ namespace CoreOverclock
             var stats = loadout.Stats;
             var syn = loadout.Synergy;
             bool ballistic = Data.tag == WeaponTag.Ballistic;
-            float dmgMul = (1f + stats.DamagePct) * heat.DamageMultiplier;
-            return new ShotParams
+            float dmgMul = (1f + stats.DamagePct) * heat.DamageMultiplier * (loadout.IsTwin(Data) ? 1f + Fusions.TwinDamage : 1f);
+            var shot = new ShotParams
             {
                 Weapon = Data,
                 Damage = Data.damage * dmgMul * (Data.explosionRadius > 0f ? syn.ExplosionDamageMultiplier : 1f),
@@ -93,9 +101,44 @@ namespace CoreOverclock
                 Pierce = Data.pierce + (ballistic ? syn.BonusPierce : 0),
                 Bounces = syn.WallBounces,
                 BurnDps = Data.burnDamagePerSecond * syn.BurnMultiplier * (1f + stats.DamagePct + stats.BurnDamagePct),
+                BurnDuration = Data.burnDuration,
+                SlowAmount = Data.slowAmount,
+                SlowDuration = Data.slowDuration,
                 ExplosionRadius = Data.explosionRadius * syn.ExplosionRadiusMultiplier * (1f + stats.ExplosionRadiusPct),
                 Overclocked = heat.State == HeatState.Overclock,
             };
+            ApplyFusions(loadout, ref shot);
+            return shot;
+        }
+
+        void ApplyFusions(Loadout loadout, ref ShotParams shot)
+        {
+            if (loadout.ActiveFusions.Count == 0) return;
+            var stats = loadout.Stats;
+            if (Data.tag == WeaponTag.Energy && loadout.Has(FusionId.ThermalShock)) shot.SlowedDamageBonus = Fusions.ThermalShockBonus;
+            switch (Data.id)
+            {
+                case "grenade" when loadout.Has(FusionId.EmpRound):
+                    shot.ChainLightning = Fusions.EmpChains;
+                    break;
+                case "minigun" when loadout.Has(FusionId.BulletHell):
+                    shot.CritExplosionRadius = Fusions.BulletHellRadius * (1f + stats.ExplosionRadiusPct);
+                    break;
+                case "railgun" when loadout.Has(FusionId.AbsoluteZero):
+                    shot.SlowedPierceRamp = Fusions.AbsoluteZeroRamp;
+                    break;
+                case "flak" when loadout.Has(FusionId.MoltenShrapnel):
+                    shot.BurnDps = Fusions.MoltenBurnDps * loadout.Synergy.BurnMultiplier * (1f + stats.DamagePct + stats.BurnDamagePct);
+                    shot.BurnDuration = Fusions.MoltenBurnDuration;
+                    break;
+                case "scattergun" when loadout.Has(FusionId.FrostShot):
+                    shot.SlowAmount = Fusions.FrostSlow;
+                    shot.SlowDuration = Fusions.FrostSlowDuration;
+                    break;
+                case "cluster_mortar" when loadout.Has(FusionId.PrismBarrage):
+                    shot.Bomblets = Fusions.PrismBomblets;
+                    break;
+            }
         }
 
         void Fire(Vector2 muzzle, Vector2 dir, in ShotParams shot)

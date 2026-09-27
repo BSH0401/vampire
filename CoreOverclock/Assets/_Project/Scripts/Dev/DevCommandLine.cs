@@ -17,6 +17,9 @@ namespace CoreOverclock
     ///   -novent               autopilot never uses Vent Out
     ///   -title                stay on the title screen (for screenshots)
     ///   -timescale N          run the simulation N times faster (balance sweeps)
+    ///   -loadout a,b,c        start with these weapon ids (fusion tests)
+    ///   -lab N                with -title: open the 연구소 on tab N (screenshots)
+    ///   -meta N               pretend every permanent upgrade is level N and everything is unlocked
     /// </summary>
     public class DevCommandLine : MonoBehaviour
     {
@@ -25,6 +28,9 @@ namespace CoreOverclock
         public static int StartWave = 1, StartScrap;
         public static bool AutoBuy, NoVent, ShowTitle;
         public static float TimeScale = 1f;
+        public static int MetaLevel = -1;
+        public static string[] Loadout;
+        public static int LabTab = -1;
         static string shotDir;
         static float[] shotTimes = { 5f, 12f };
         static float quitAfter = -1f;
@@ -37,6 +43,9 @@ namespace CoreOverclock
             Enabled = Autopilot = God = AutoBuy = NoVent = ShowTitle = false;
             StartScrap = 0;
             TimeScale = 1f;
+            MetaLevel = -1;
+            Loadout = null;
+            LabTab = -1;
             WaveTimeOverride = -1f;
             StartWave = 1;
             shotDir = null;
@@ -56,6 +65,9 @@ namespace CoreOverclock
                     case "-title": ShowTitle = true; break;
                     case "-timescale": TimeScale = Mathf.Clamp(ParseFloat(next, 1f), 0.1f, 8f); break;
                     case "-wavetime": WaveTimeOverride = ParseFloat(next, -1f); Enabled = true; break;
+                    case "-loadout": Loadout = next?.Split(','); Enabled = true; break;
+                    case "-lab": LabTab = (int)ParseFloat(next, 0f); break;
+                    case "-meta": MetaLevel = (int)ParseFloat(next, 0f); break;
                     case "-startwave": StartWave = (int)ParseFloat(next, 1f); break;
                     case "-shots": shotDir = next; Enabled = true; break;
                     case "-shottimes":
@@ -118,7 +130,7 @@ namespace CoreOverclock
                 // Weapons first until the slots are full, then chips; reroll while it can afford to.
                 bool bought = false;
                 for (int pass = 0; pass < 2 && !bought; pass++)
-                for (int i = 0; i < Shop.SlotCount && !bought; i++)
+                for (int i = 0; i < gm.Shop.SlotCount && !bought; i++)
                     if ((pass == 1 || gm.Shop.Offers[i].IsWeapon) && gm.Shop.Buy(i)) bought = true;
                 if (!bought && gm.Scrap > gm.Shop.RerollCost * 4) gm.Shop.Reroll();
             }

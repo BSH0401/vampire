@@ -17,6 +17,7 @@ MonoBehaviour:
   description: "\uC804\uD22C \uC911 \uCCB4\uB825\uC744 \uC11C\uC11C\uD788 \uD68C\uBCF5."
   tier: 1
   price: 20
+  unlockCost: 0
   modifiers:
   - stat: 8
     value: 0.4

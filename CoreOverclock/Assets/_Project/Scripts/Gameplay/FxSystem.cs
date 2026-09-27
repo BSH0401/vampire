@@ -21,6 +21,13 @@ namespace CoreOverclock
             public float Time, Duration, Size, Spin;
         }
 
+        struct BoltSegment
+        {
+            public SpriteRenderer Renderer;
+            public Color Color;
+            public float Time, Duration;
+        }
+
         const int MaxShards = 400;
 
         static FxSystem instance;
@@ -28,6 +35,7 @@ namespace CoreOverclock
         Pool<SpriteRenderer> shardPool;
         readonly List<PulseFx> active = new();
         readonly List<Shard> shards = new();
+        readonly List<BoltSegment> bolts = new();
 
         public static FxSystem Create(Transform parent)
         {
@@ -71,9 +79,47 @@ namespace CoreOverclock
             }
         }
 
+        /// <summary>Jagged lightning line (EMP 탄 chains).</summary>
+        public static void Bolt(Vector2 from, Vector2 to, Color color, float duration = 0.18f)
+        {
+            if (!instance) return;
+            const int segments = 4;
+            Vector2 prev = from;
+            Vector2 normal = Vector2.Perpendicular((to - from).normalized);
+            for (int i = 1; i <= segments; i++)
+            {
+                Vector2 next = Vector2.Lerp(from, to, i / (float)segments);
+                if (i < segments) next += normal * Random.Range(-0.35f, 0.35f);
+                Vector2 d = next - prev;
+                var sr = instance.shardPool.Get();
+                sr.transform.SetPositionAndRotation((prev + next) * 0.5f, Quaternion.Euler(0f, 0f, Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg));
+                sr.transform.localScale = new Vector3(d.magnitude, 0.07f, 1f);
+                sr.color = color;
+                instance.bolts.Add(new BoltSegment { Renderer = sr, Color = color, Duration = duration });
+                prev = next;
+            }
+        }
+
         void Update()
         {
             float dt = Time.deltaTime;
+            for (int i = bolts.Count - 1; i >= 0; i--)
+            {
+                var b = bolts[i];
+                b.Time += dt;
+                if (b.Time >= b.Duration)
+                {
+                    shardPool.Release(b.Renderer);
+                    bolts[i] = bolts[^1];
+                    bolts.RemoveAt(bolts.Count - 1);
+                    continue;
+                }
+                var c = b.Color;
+                c.a = 1f - b.Time / b.Duration;
+                b.Renderer.color = c;
+                bolts[i] = b;
+            }
+
             for (int i = shards.Count - 1; i >= 0; i--)
             {
                 var s = shards[i];

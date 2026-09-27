@@ -16,12 +16,12 @@ namespace CoreOverclock
     }
 
     /// <summary>
-    /// 코어 작업실 상점 (기획서 6.2): 4 random offers, reroll with rising cost,
+    /// 코어 작업실 상점 (기획서 6.2): 4 random offers (5 with the 확장 진열대 upgrade), reroll with rising cost,
     /// lock to keep an offer for the next visit, sell weapons for 70% of what was paid.
     /// </summary>
     public class Shop
     {
-        public const int SlotCount = 4;
+        public const int MaxSlots = 5;
         public const float SellRatio = 0.7f;
         const float PriceGrowthPerWave = 0.12f;
 
@@ -30,7 +30,9 @@ namespace CoreOverclock
         readonly GameManager gm;
         int wave, rerollStep;
 
-        public readonly ShopOffer[] Offers = new ShopOffer[SlotCount];
+        /// <summary>One entry per visible slot (4, or 5 with the 확장 진열대 upgrade).</summary>
+        public readonly ShopOffer[] Offers;
+        public int SlotCount => Offers.Length;
         public int RerollCost { get; private set; }
 
         public event Action Changed;
@@ -40,6 +42,7 @@ namespace CoreOverclock
             this.db = db;
             this.loadout = loadout;
             this.gm = gm;
+            Offers = new ShopOffer[Mathf.Clamp(MetaProgress.ShopSlots, 1, MaxSlots)];
         }
 
         /// <param name="upcomingWave">The wave the player is preparing for; drives prices and tiers.</param>
@@ -47,7 +50,7 @@ namespace CoreOverclock
         {
             wave = upcomingWave;
             rerollStep = 1 + wave / 5;
-            RerollCost = 1 + wave / 2;
+            RerollCost = Mathf.Max(0, 1 + wave / 2 - MetaProgress.RerollDiscount);
             Roll();
             // Locked offers carry over at their original price, but the lock is spent.
             foreach (var o in Offers) o.Locked = false;
@@ -79,10 +82,10 @@ namespace CoreOverclock
             bool weapon = db.chips.Count == 0 || (db.weapons.Count > 0 && UnityEngine.Random.value < db.weaponChance);
             if (weapon)
             {
-                var w = Pick(db.weapons, x => x.tier <= maxTier) ?? db.weapons[0];
+                var w = Pick(db.weapons, x => x.tier <= maxTier && MetaProgress.IsUnlocked(x)) ?? db.weapons[0];
                 return new ShopOffer { Weapon = w, Price = ScalePrice(w.price) };
             }
-            var c = Pick(db.chips, x => x.tier <= maxTier) ?? db.chips[0];
+            var c = Pick(db.chips, x => x.tier <= maxTier && MetaProgress.IsUnlocked(x)) ?? db.chips[0];
             return new ShopOffer { Chip = c, Price = ScalePrice(c.price) };
         }
 

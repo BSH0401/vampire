@@ -265,12 +265,14 @@ namespace CoreOverclock
             bannerTimer = duration;
         }
 
-        public void ShowGameOver(bool victory, int wave, int kills, int totalScrap)
+        public void ShowGameOver(bool victory, int wave, int kills, int totalScrap, int fragments)
         {
             bool demoEnd = victory && BuildFlavor.IsDemo;
             gameOverTitle.text = demoEnd ? "데모 클리어!" : victory ? "탈출 성공!" : "코어 파괴";
             gameOverTitle.color = victory ? Palette.Scrap : Palette.Danger;
-            gameOverStats.text = $"도달 웨이브: {wave}\n총 처치: {kills}\n보유 스크랩: ◆ {totalScrap}" +
+            var fragHex = ColorUtility.ToHtmlStringRGB(Palette.Fragment);
+            gameOverStats.text = $"도달 웨이브: {wave}\n총 처치: {kills}\n보유 스크랩: ◆ {totalScrap}\n" +
+                $"<color=#{fragHex}>코어 파편 +{fragments} {MetaProgress.Currency}  (보유 {MetaProgress.Fragments})</color>" +
                 (demoEnd ? "\n<size=24><color=#FF9A3C>웨이브 11~20과 최종 보스는 정식판에서!\nSteam 위시리스트에 추가해 주세요.</color></size>" : "");
             Show(gameOverPanel, restartButton);
         }

@@ -25,11 +25,17 @@
 - [x] **Phase 4** 폴리싱 & 데모: 코드 합성 효과음 22종·BGM 4곡, 블룸/비네트/색수차 포스트 프로세싱, 타이틀·설정 화면, 업적 7종 + Steam 연동 레이어, Next Fest용 데모 빌드
 
 - [x] **중간 점검 (v0.4.1)**: 대미지 숫자 정리, 처치·피격 파편 이펙트, 엘리트 HP 바, 저체력 경고, 무기 슬롯 표시, 첫 플레이 튜토리얼 힌트, 포커스 잃으면 자동 일시정지, 저거너트 난이도 완화
+- [x] **Phase 5 (v0.5.0)** 메타 성장 & 퓨전
+  - **코어 파편**: 판이 끝날 때(사망/클리어) 도달 웨이브·보스 처치·처치 수로 획득
+  - **연구소** (타이틀): 영구 강화 6종(최대 HP, 시작 스크랩, 냉각, 방열 쿨타임, 리롤 할인, 상점 진열 +1칸), 무기 7종·칩셋 10종 해금, 시작 무기 선택, 퓨전 도감
+  - **퓨전 8종**: 특정 무기 2개 조합 시 특수 효과 (열충격, EMP 탄, 탄막 지옥, 절대영도, 용융 파편, 서리 산탄, 굴절 포격, 트윈 링크). 상점 카드에 "퓨전 완성" 미리보기
+  - 업적 2종 추가(첫 퓨전, 퓨전 도감 완성), 설정에 진행 초기화
+  - 데모 빌드: 강화 3단계·티어 2 부품까지만 해금 가능
 
 ## 구조
-- `Assets/_Project/Scripts/Core` — GameManager(웨이브 흐름), HeatSystem, Loadout(스탯·시너지), Shop, 풀링/입력/유틸
+- `Assets/_Project/Scripts/Core` — GameManager(웨이브 흐름), HeatSystem, Loadout(스탯·시너지), Fusion(퓨전 정의), MetaProgress(코어 파편·영구 성장), Shop, 풀링/입력/유틸
 - `Assets/_Project/Scripts/Gameplay` — Player, Weapon, Projectile, Enemy, Spawner, Scrap, DataTower, Arena, FX
-- `Assets/_Project/Scripts/UI` — HUD, ShopUI, TitleScreen/SettingsPanel, DamagePopups
+- `Assets/_Project/Scripts/UI` — HUD, ShopUI, TitleScreen/SettingsPanel, LabScreen(연구소), DamagePopups
 - `Assets/_Project/Scripts/Audio` — SoundSynth(효과음·음악 합성), AudioManager
 - `Assets/_Project/Scripts/Platform` — SteamService(업적), BuildFlavor(데모 여부)
 - `Assets/_Project/Data` — ScriptableObject 데이터(무기/칩셋/적/웨이브/상점)
@@ -43,4 +49,9 @@
 4. Steamworks 파트너 사이트에 업적 등록 — API 이름은 `Scripts/Platform/SteamService.cs`의 `Achievements` 참고
 
 ## 테스트용 커맨드라인
-`CoreOverclock.exe -screen-fullscreen 0 -autopilot -autobuy -god -timescale 3 -quitafter 300` — 자동 조종으로 전체 웨이브를 돌며 웨이브별 밸런스 로그를 남깁니다 (`-shots <폴더>`, `-startwave N`, `-title` 등은 `DevCommandLine.cs` 참고). 테스트 실행 중 달성한 업적은 저장되지 않습니다.
+`CoreOverclock.exe -screen-fullscreen 0 -autopilot -autobuy -god -timescale 3 -quitafter 300` — 자동 조종으로 전체 웨이브를 돌며 웨이브별 밸런스 로그를 남깁니다 (`-shots <폴더>`, `-startwave N`, `-title` 등은 `DevCommandLine.cs` 참고).
+- `-meta N`: 모든 영구 강화를 N단계로 가정하고 전부 해금한 상태로 실행
+- `-loadout laser,cryo_shard`: 지정한 무기를 들고 시작 (퓨전 테스트)
+- `-title -lab N`: 연구소 N번 탭을 연 상태로 시작 (스크린샷용)
+
+테스트 실행 중에는 업적·코어 파편·해금 등 진행 상황이 저장되지 않습니다.

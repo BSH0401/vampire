@@ -30,11 +30,14 @@ namespace CoreOverclock
         public const string DemoClear = "ACH_DEMO_CLEAR";
         public const string FullArsenal = "ACH_FULL_ARSENAL";
         public const string FirstMeltdown = "ACH_FIRST_MELTDOWN";
+        public const string FirstFusion = "ACH_FIRST_FUSION";
+        public const string FusionCodex = "ACH_FUSION_CODEX";
 
         public static readonly (string id, string name)[] All =
         {
             (FirstWave, "첫 출격"), (Juggernaut, "저거너트 격파"), (Overseer, "오버시어 격파"), (Escape, "탈출 성공"),
             (DemoClear, "데모 클리어"), (FullArsenal, "완전 무장"), (FirstMeltdown, "노심 용융"),
+            (FirstFusion, "첫 퓨전"), (FusionCodex, "퓨전 도감 완성"),
         };
     }
 

@@ -13,6 +13,7 @@ namespace CoreOverclock
         public WeaponTag tag;
         [Min(1)] public int tier = 1;
         [Min(0)] public int price = 20;
+        [Tooltip("코어 파편 cost to unlock in the 연구소; 0 = available from the start")] [Min(0)] public int unlockCost;
 
         [Header("Combat")]
         public float damage = 8f;

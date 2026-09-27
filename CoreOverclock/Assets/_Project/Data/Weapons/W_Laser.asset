@@ -19,6 +19,7 @@ MonoBehaviour:
   tag: 1
   tier: 1
   price: 24
+  unlockCost: 0
   damage: 2.5
   fireInterval: 0.18
   range: 6.5

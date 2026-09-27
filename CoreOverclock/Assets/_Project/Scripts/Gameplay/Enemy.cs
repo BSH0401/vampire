@@ -38,6 +38,7 @@ namespace CoreOverclock
         public float MaxHP { get; private set; }
         public float HP => hp;
         public bool Shielded => shieldTimer > 0f;
+        public bool Slowed => slowTimer > 0f;
         bool ShowsHPBar => !Data.isBoss && Data.scale >= 1.5f;
 
         public static Enemy CreateInstance(Transform parent)

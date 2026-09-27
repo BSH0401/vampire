@@ -14,7 +14,34 @@ namespace CoreOverclock.EditorTools
     {
         // ─────────────────────────────── Weapons ───────────────────────────────
 
-        public static List<WeaponData> Weapons(string root) => new()
+        /// <summary>코어 파편 unlock costs (연구소). Everything else is available from the first run.</summary>
+        static readonly Dictionary<string, int> UnlockCosts = new()
+        {
+            // Weapons: 8 start unlocked, 7 locked
+            ["railgun"] = 30, ["rocket_pod"] = 30, ["plasma_lance"] = 30,
+            ["flak"] = 50, ["prism"] = 50, ["glacier"] = 50, ["cluster_mortar"] = 50,
+            // Chips: 15 start unlocked, 10 locked
+            ["overclocker"] = 20, ["ln2_tank"] = 20, ["overdrive_coil"] = 20, ["he_warhead"] = 20, ["thermal_core"] = 20, ["meltdown_fuse"] = 20,
+            ["glass_cannon"] = 35, ["quantum_sight"] = 35, ["cryo_system"] = 35, ["overload_amp"] = 35,
+        };
+
+        static int UnlockCost(string id) => UnlockCosts.TryGetValue(id, out var c) ? c : 0;
+
+        public static List<WeaponData> Weapons(string root)
+        {
+            var list = WeaponList(root);
+            foreach (var w in list) { w.unlockCost = UnlockCost(w.id); EditorUtility.SetDirty(w); }
+            return list;
+        }
+
+        public static List<ChipData> Chips(string root)
+        {
+            var list = ChipList(root);
+            foreach (var c in list) { c.unlockCost = UnlockCost(c.id); EditorUtility.SetDirty(c); }
+            return list;
+        }
+
+        static List<WeaponData> WeaponList(string root) => new()
         {
             // 탄도 (Ballistic): pierce / knockback
             Weapon(root, "W_Blaster", w =>
@@ -157,7 +184,7 @@ namespace CoreOverclock.EditorTools
 
         // ─────────────────────────────── Chipsets ───────────────────────────────
 
-        public static List<ChipData> Chips(string root) => new()
+        static List<ChipData> ChipList(string root) => new()
         {
             // Tier 1
             Chip(root, "C_HeatSink", "heat_sink", "히트싱크", 1, 18, "기본 냉각 성능 강화.", (StatType.CoolingFlat, 3f)),

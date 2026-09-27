@@ -61,6 +61,7 @@ namespace CoreOverclock
         [TextArea] public string description;
         [Min(1)] public int tier = 1;
         [Min(0)] public int price = 15;
+        [Tooltip("코어 파편 cost to unlock in the 연구소; 0 = available from the start")] [Min(0)] public int unlockCost;
         public List<StatModifier> modifiers = new();
     }
 }

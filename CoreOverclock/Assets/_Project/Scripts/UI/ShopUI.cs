@@ -31,6 +31,8 @@ namespace CoreOverclock
         Button rerollButton, nextButton;
         readonly List<Card> cards = new();
         readonly List<Slot> slots = new();
+        string summaryText;
+        float fusionNoticeTime;
 
         public bool IsOpen => root.activeSelf;
 
@@ -43,6 +45,7 @@ namespace CoreOverclock
             ui.Build(canvas.transform);
             shop.Changed += ui.Refresh;
             loadout.Changed += ui.Refresh;
+            loadout.FusionActivated += ui.OnFusionActivated;
             return ui;
         }
 
@@ -62,10 +65,11 @@ namespace CoreOverclock
                 "◆ 0", 48, Palette.Scrap, TextAnchor.MiddleRight);
 
             // Offer cards
-            for (int i = 0; i < Shop.SlotCount; i++)
+            float spacing = shop.SlotCount > 4 ? 380f : 400f;
+            for (int i = 0; i < shop.SlotCount; i++)
             {
                 int index = i;
-                float x = (i - 1.5f) * 400f;
+                float x = (i - (shop.SlotCount - 1) * 0.5f) * spacing;
                 cards.Add(BuildCard(dim, new Vector2(x, 170f), () => Feedback(shop.Buy(index)), () => shop.ToggleLock(index)));
             }
 
@@ -83,9 +87,9 @@ namespace CoreOverclock
                 slots.Add(BuildSlot(dim, new Vector2(x, -270f), () => Feedback(shop.Sell(index))));
             }
 
-            synergyText = UIFactory.Label(UIFactory.Rect("Synergy", dim, c, c, new Vector2(-390f, -435f), new Vector2(1100f, 150f)),
-                "", 22, Palette.Text, TextAnchor.UpperLeft);
-            synergyText.lineSpacing = 1.15f;
+            synergyText = UIFactory.Label(UIFactory.Rect("Synergy", dim, c, c, new Vector2(-390f, -427f), new Vector2(1100f, 150f)),
+                "", 21, Palette.Text, TextAnchor.UpperLeft);
+            synergyText.lineSpacing = 1.02f;
             statsText = UIFactory.Label(UIFactory.Rect("Stats", dim, c, c, new Vector2(560f, -435f), new Vector2(760f, 150f)),
                 "", 22, Palette.Text, TextAnchor.UpperLeft);
             statsText.lineSpacing = 1.15f;
@@ -142,9 +146,12 @@ namespace CoreOverclock
 
         public void Show(int clearedWave, int kills, int scrapGained, int clearBonus)
         {
-            summary.text = clearedWave > 0
+            summaryText = clearedWave > 0
                 ? $"WAVE {clearedWave} 클리어  ·  처치 {kills}  ·  스크랩 +{scrapGained} (클리어 보너스 {clearBonus} 포함)   →   다음: WAVE {clearedWave + 1}"
                 : "";
+            summary.text = summaryText;
+            summary.color = new Color(0.7f, 0.78f, 0.9f);
+            fusionNoticeTime = 0f;
             root.SetActive(true);
             root.transform.SetAsLastSibling();
             Refresh();
@@ -157,7 +164,22 @@ namespace CoreOverclock
 
         void Update()
         {
-            if (IsOpen) scrapLabel.text = $"◆ {gm.Scrap}";
+            if (!IsOpen) return;
+            scrapLabel.text = $"◆ {gm.Scrap}";
+            if (fusionNoticeTime > 0f && (fusionNoticeTime -= Time.unscaledDeltaTime) <= 0f)
+            {
+                summary.text = summaryText;
+                summary.color = new Color(0.7f, 0.78f, 0.9f);
+            }
+        }
+
+        void OnFusionActivated(FusionId id)
+        {
+            if (!IsOpen) return;
+            var f = Fusions.Get(id);
+            summary.text = $"★ 퓨전 완성!  {f.Name}  —  {f.Effect}";
+            summary.color = Palette.Fusion;
+            fusionNoticeTime = 3.5f;
         }
 
         public void Refresh()
@@ -201,6 +223,7 @@ namespace CoreOverclock
             var syn = loadout.Synergy;
             var sb = new StringBuilder("<b>시너지</b>\n");
             foreach (WeaponTag tag in System.Enum.GetValues(typeof(WeaponTag))) sb.Append(syn.Describe(tag)).Append('\n');
+            sb.Append(FusionSummary());
             synergyText.text = sb.ToString();
             statsText.text = StatsSummary();
         }
@@ -213,7 +236,7 @@ namespace CoreOverclock
             card.Name.text = o.Name;
             card.Name.color = o.Sold ? new Color(0.4f, 0.45f, 0.55f) : color;
             card.Kind.text = weapon ? $"무기 · {WeaponTags.KoreanName(o.Weapon.tag)} · T{o.Weapon.tier}" : $"패시브 칩셋 · T{o.Chip.tier}";
-            card.Body.text = o.Sold ? "" : weapon ? WeaponBody(o.Weapon) : ChipBody(o.Chip);
+            card.Body.text = o.Sold ? "" : weapon ? FusionPreview(o.Weapon) + WeaponBody(o.Weapon) : ChipBody(o.Chip);
             card.Price.text = o.Sold ? "SOLD" : $"◆ {o.Price}";
             card.Price.color = o.Sold ? new Color(0.4f, 0.45f, 0.55f) : gm.Scrap >= o.Price ? Palette.Scrap : Palette.Danger;
 
@@ -222,6 +245,24 @@ namespace CoreOverclock
             card.Lock.interactable = !o.Sold;
             card.LockLabel.text = o.Locked ? "잠김" : "잠금";
             card.Frame.color = o.Locked ? new Color(0.16f, 0.14f, 0.05f, 1f) : new Color(0.07f, 0.09f, 0.15f, 1f);
+        }
+
+        string FusionPreview(WeaponData w)
+        {
+            var completed = loadout.FusionsCompletedBy(w);
+            if (completed.Count == 0) return "";
+            var names = new List<string>();
+            foreach (var id in completed) names.Add(Fusions.Get(id).Name);
+            return $"<color=#{ColorUtility.ToHtmlStringRGB(Palette.Fusion)}>★ 퓨전 완성: {string.Join(", ", names)}</color>\n";
+        }
+
+        string FusionSummary()
+        {
+            var hex = ColorUtility.ToHtmlStringRGB(Palette.Fusion);
+            if (loadout.ActiveFusions.Count == 0) return $"<color=#{hex}>퓨전</color>  <color=#5A6378>특정 무기 2개를 함께 장착하면 발동</color>";
+            var names = new List<string>();
+            foreach (var f in Fusions.All) if (loadout.Has(f.Id)) names.Add(f.Name);
+            return $"<color=#{hex}>퓨전  {string.Join(" · ", names)}</color>";
         }
 
         static string WeaponBody(WeaponData w)

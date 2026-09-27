@@ -26,6 +26,7 @@ namespace CoreOverclock
         TitleScreen title;
         Tutorial tutorial;
         SettingsPanel settings;
+        LabScreen lab;
         static bool skipTitleOnce; // "다시 시작" reloads the scene straight into a run
         DataTower[] towers;
         WaveDefinition currentWave;
@@ -34,6 +35,8 @@ namespace CoreOverclock
         int waveKills, waveScrapStart;
         float scrapRemainder, waveStartTime;
         float lastOverclockBanner = -10f;
+        int bossKills;
+        bool metaDirty; // 연구소 purchases since this scene loaded: rebuild the run on start
 
         public static GameManager Instance { get; private set; }
         public GameState State { get; private set; }
@@ -67,7 +70,10 @@ namespace CoreOverclock
             Heat = gameObject.AddComponent<HeatSystem>();
             Heat.StateChanged += OnHeatStateChanged;
             Loadout = new Loadout();
-            Loadout.AddWeapon(startingWeapon, startingWeapon.price);
+            var start = ChooseStartingWeapon();
+            Loadout.AddWeapon(start, start.price);
+            Loadout.FusionActivated += OnFusionActivated;
+            MetaProgress.Changed += OnMetaChanged;
             var cam = Camera.main;
             if (cam)
             {
@@ -100,18 +106,42 @@ namespace CoreOverclock
             Shop = new Shop(shopDatabase, Loadout, this);
             shopUI = ShopUI.Create(hud.Canvas, this, Shop, Loadout);
             settings = SettingsPanel.Create(hud.Canvas);
-            title = TitleScreen.Create(hud.Canvas, this, settings);
+            lab = LabScreen.Create(hud.Canvas, this);
+            title = TitleScreen.Create(hud.Canvas, this, settings, lab);
             tutorial = new Tutorial(hud);
             hud.SetSettingsPanel(settings);
-            Scrap += DevCommandLine.StartScrap;
+            Scrap += DevCommandLine.StartScrap + MetaProgress.StartScrapBonus;
+            if (DevCommandLine.Loadout != null)
+                foreach (var id in DevCommandLine.Loadout)
+                {
+                    var w = shopDatabase.weapons.Find(x => x && x.id == id);
+                    if (w) Loadout.AddWeapon(w, w.price);
+                }
 
             if (DevCommandLine.Enabled) gameObject.AddComponent<DevCommandLine>();
         }
 
         void OnDestroy()
         {
+            MetaProgress.Changed -= OnMetaChanged;
             if (Instance == this) Instance = null;
         }
+
+        void OnMetaChanged() => metaDirty = true;
+
+        /// <summary>연구소 start weapon if it is still unlocked, else the default.</summary>
+        WeaponData ChooseStartingWeapon()
+        {
+            string id = MetaProgress.StartWeaponId;
+            if (!string.IsNullOrEmpty(id))
+                foreach (var w in shopDatabase.weapons)
+                    if (w && w.id == id && IsStartWeaponOption(w)) return w;
+            return startingWeapon;
+        }
+
+        public static bool IsStartWeaponOption(WeaponData w) => w.tier <= 2 && MetaProgress.IsUnlocked(w);
+        public ShopDatabase Database => shopDatabase;
+        public WeaponData DefaultStartingWeapon => startingWeapon;
 
         /// <summary>Alt-tab / focus loss pauses the fight (automated test runs keep going).</summary>
         void OnApplicationFocus(bool focused)
@@ -131,9 +161,19 @@ namespace CoreOverclock
             AudioManager.Prewarm();
             AudioManager.PlayMusic(MusicId.Title);
             title.Show();
+            if (DevCommandLine.LabTab >= 0)
+            {
+                title.Hide();
+                lab.Open(title.Show, DevCommandLine.LabTab);
+            }
         }
 
-        public void StartGame() => StartGame(1);
+        public void StartGame()
+        {
+            // Upgrades bought in the 연구소 change HP, scrap, shop slots and the start weapon: rebuild the scene.
+            if (metaDirty) Restart();
+            else StartGame(1);
+        }
 
         void StartGame(int wave)
         {
@@ -226,7 +266,7 @@ namespace CoreOverclock
                 Unlock(BuildFlavor.IsDemo ? Achievements.DemoClear : Achievements.Escape);
                 AudioManager.PlayMusic(MusicId.None);
                 AudioManager.Play(SfxId.Victory, 0.8f, 0f);
-                hud.ShowGameOver(true, Wave, TotalKills, Scrap);
+                hud.ShowGameOver(true, Wave, TotalKills, Scrap, AwardFragments(true));
                 yield break;
             }
 
@@ -264,7 +304,25 @@ namespace CoreOverclock
         IEnumerator GameOverRoutine()
         {
             yield return new WaitForSeconds(1.5f);
-            hud.ShowGameOver(false, Wave, TotalKills, Scrap);
+            hud.ShowGameOver(false, Wave, TotalKills, Scrap, AwardFragments(false));
+        }
+
+        /// <summary>End of run: convert the run into permanent 코어 파편.</summary>
+        int AwardFragments(bool victory)
+        {
+            int amount = MetaProgress.CalculateReward(Wave, bossKills, TotalKills, victory);
+            MetaProgress.AddFragments(amount);
+            metaDirty = false; // a restart from the game-over screen reloads the scene anyway
+            if (DevCommandLine.Enabled) Debug.Log($"[Dev] Fragments +{amount} (wave={Wave} bosses={bossKills} kills={TotalKills} victory={victory})");
+            return amount;
+        }
+
+        void OnFusionActivated(FusionId id)
+        {
+            AudioManager.Play(SfxId.Overclock, 0.5f, 0f);
+            if (DevCommandLine.Enabled) Debug.Log($"[Dev] Fusion {id} wave={Wave}");
+            if (MetaProgress.Discover(id)) Unlock(Achievements.FirstFusion);
+            if (MetaProgress.DiscoveredCount >= Fusions.All.Length) Unlock(Achievements.FusionCodex);
         }
 
         public void SetPaused(bool paused)
@@ -302,6 +360,7 @@ namespace CoreOverclock
             waveKills++;
             TotalKills++;
             if (!enemy.IsBoss || State != GameState.Combat) return;
+            bossKills++;
 
             CameraShake.Add(0.8f);
             FxSystem.Pulse(enemy.Position, enemy.Data.color, 0.5f, 14f, 0.8f);

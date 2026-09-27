@@ -16,7 +16,7 @@ namespace CoreOverclock.EditorTools
         const string ScenePath = Root + "/Scenes/Arena.unity";
         const string BuildPath = "Builds/Windows/CoreOverclock.exe";
         const string DemoBuildPath = "Builds/Demo/CoreOverclockDemo.exe";
-        const string Version = "0.4.1";
+        const string Version = "0.5.0";
 
         [MenuItem("Core Overclock/Setup Project")]
         public static void Setup()
