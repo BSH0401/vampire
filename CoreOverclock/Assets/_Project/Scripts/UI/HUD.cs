@@ -18,7 +18,8 @@ namespace CoreOverclock
         GameObject gameOverPanel, pausePanel;
         Text gameOverTitle, gameOverStats;
         Button restartButton, resumeButton;
-        float bannerTimer, toastTimer;
+        float bannerTimer, toastTimer, hintTimer;
+        Text hint, weaponStrip;
         RectTransform gameplayRoot;
         Text toast;
         SettingsPanel settings;
@@ -64,6 +65,15 @@ namespace CoreOverclock
                 "", 80, Color.white);
             BuildHeatGauge(root, bottom);
             BuildBossBar(root, top);
+
+            hint = UIFactory.Label(UIFactory.Rect("Hint", root, bottom, bottom, new Vector2(0f, 150f), new Vector2(1500f, 40f)),
+                "", 26, new Color(0.85f, 0.95f, 1f));
+            hint.gameObject.SetActive(false);
+            weaponStrip = UIFactory.Label(UIFactory.Rect("Weapons", root, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(32f, 30f), new Vector2(380f, 36f)),
+                "", 26, Palette.Text, TextAnchor.MiddleLeft);
+            weaponStrip.rectTransform.pivot = new Vector2(0f, 0.5f);
+            gm.Loadout.Changed += RefreshWeaponStrip;
+            RefreshWeaponStrip();
 
             gameOverPanel = BuildPanel("GameOverPanel", out gameOverTitle, out gameOverStats);
             restartButton = UIFactory.Button(gameOverPanel.transform, "다시 시작", new Vector2(-220f, -170f), new Vector2(400f, 80f), gm.Restart);
@@ -164,6 +174,15 @@ namespace CoreOverclock
                 bossLabel.text = $"{boss.Data.displayName}   {Mathf.CeilToInt(r * 100f)}%";
             }
 
+            if (hintTimer > 0f)
+            {
+                hintTimer -= Time.deltaTime;
+                var hc = hint.color;
+                hc.a = Mathf.Clamp01(hintTimer / 0.6f);
+                hint.color = hc;
+                if (hintTimer <= 0f) hint.gameObject.SetActive(false);
+            }
+
             toastTimer -= Time.unscaledDeltaTime;
             var tc = toast.color;
             tc.a = Mathf.Clamp01(toastTimer / 0.5f);
@@ -209,6 +228,28 @@ namespace CoreOverclock
         }
 
         public void SetSettingsPanel(SettingsPanel panel) => settings = panel;
+
+        /// <summary>Tutorial line above the heat gauge.</summary>
+        public void ShowHint(string text, float duration)
+        {
+            hint.text = text;
+            hint.gameObject.SetActive(true);
+            hintTimer = duration;
+        }
+
+        /// <summary>Equipped weapons as tag-coloured blocks, e.g. "무기 ■■■□□□".</summary>
+        void RefreshWeaponStrip()
+        {
+            var sb = new System.Text.StringBuilder("무기 ");
+            var weapons = gm.Loadout.Weapons;
+            for (int i = 0; i < Player.MaxWeapons; i++)
+            {
+                if (i < weapons.Count)
+                    sb.Append($"<color=#{ColorUtility.ToHtmlStringRGB(WeaponTags.ColorOf(weapons[i].Data.tag))}>■</color>");
+                else sb.Append("<color=#3A4050>□</color>");
+            }
+            weaponStrip.text = sb.ToString();
+        }
 
         /// <summary>Small notification under the wave label (achievements).</summary>
         public void ShowToast(string text)

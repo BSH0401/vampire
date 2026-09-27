@@ -24,6 +24,7 @@ namespace CoreOverclock
         HUD hud;
         ShopUI shopUI;
         TitleScreen title;
+        Tutorial tutorial;
         SettingsPanel settings;
         static bool skipTitleOnce; // "다시 시작" reloads the scene straight into a run
         DataTower[] towers;
@@ -100,6 +101,7 @@ namespace CoreOverclock
             shopUI = ShopUI.Create(hud.Canvas, this, Shop, Loadout);
             settings = SettingsPanel.Create(hud.Canvas);
             title = TitleScreen.Create(hud.Canvas, this, settings);
+            tutorial = new Tutorial(hud);
             hud.SetSettingsPanel(settings);
             Scrap += DevCommandLine.StartScrap;
 
@@ -109,6 +111,12 @@ namespace CoreOverclock
         void OnDestroy()
         {
             if (Instance == this) Instance = null;
+        }
+
+        /// <summary>Alt-tab / focus loss pauses the fight (automated test runs keep going).</summary>
+        void OnApplicationFocus(bool focused)
+        {
+            if (!focused && !DevCommandLine.Enabled && State == GameState.Combat && !TimeControl.Paused) SetPaused(true);
         }
 
         void Start()
@@ -140,6 +148,7 @@ namespace CoreOverclock
             AudioManager.Muffled = TimeControl.Paused || (State == GameState.Combat && Heat.State == HeatState.Meltdown);
 
             if (State != GameState.Combat || TimeControl.Paused) return;
+            tutorial.Tick(this);
             TimeLeft -= Time.deltaTime;
             if (TimeLeft <= 0f) EndWave();
         }
@@ -163,6 +172,7 @@ namespace CoreOverclock
             shopUI.Hide();
             State = GameState.Combat;
             Spawner.Begin(def);
+            tutorial.OnWaveStart(wave);
             AudioManager.PlayMusic(def.bosses.Count > 0 ? MusicId.Boss : MusicId.Combat);
 
             bool boss = def.bosses.Count > 0;
@@ -188,6 +198,7 @@ namespace CoreOverclock
                           $"fps={(Time.frameCount - waveStartFrame) / Mathf.Max(0.01f, Time.realtimeSinceStartup - waveStartRealtime):F0}");
             TimeLeft = 0f;
             State = GameState.Resolving;
+            Heat.ResetForWave(); // don't carry the last reading into the shop screen
             Spawner.StopAndDissolveAll();
             ProjectileSystem.ClearAll();
             EnemyProjectileSystem.ClearAll();

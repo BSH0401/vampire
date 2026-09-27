@@ -9,6 +9,8 @@ namespace CoreOverclock
     {
         const float Lifetime = 0.6f;
         const float Rise = 70f;
+        /// <summary>Above this many live numbers, ordinary hits are skipped so crits stay readable.</summary>
+        const int CrowdLimit = 30;
 
         class Popup
         {
@@ -47,13 +49,14 @@ namespace CoreOverclock
         public static void Show(Vector2 world, float amount, Color color, bool big)
         {
             if (!instance || !instance.cam) return;
+            if (!big && instance.active.Count >= CrowdLimit) return;
             var p = instance.free.Count > 0 ? instance.free.Pop() : instance.CreatePopup();
             Vector2 screen = instance.cam.WorldToScreenPoint(world + Random.insideUnitCircle * 0.2f);
             RectTransformUtility.ScreenPointToLocalPointInRectangle(instance.root, screen, null, out var local);
             p.Start = local;
             p.Color = color;
             p.Time = 0f;
-            p.Scale = big ? 1.5f : 1f;
+            p.Scale = big ? 1.45f : 0.8f;
             p.Text.text = Mathf.CeilToInt(amount).ToString();
             p.Text.color = color;
             p.Rect.anchoredPosition = local;

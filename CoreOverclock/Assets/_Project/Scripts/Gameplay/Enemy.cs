@@ -18,7 +18,7 @@ namespace CoreOverclock
 
         Rigidbody2D rb;
         CircleCollider2D col;
-        SpriteRenderer body, glow, telegraph, shieldRing;
+        SpriteRenderer body, glow, telegraph, shieldRing, hpBack, hpFill;
         Transform bodyTransform;
         Action<Enemy> release;
         readonly Dictionary<EnemyBehaviour, EnemyBrain> brains = new();
@@ -38,6 +38,7 @@ namespace CoreOverclock
         public float MaxHP { get; private set; }
         public float HP => hp;
         public bool Shielded => shieldTimer > 0f;
+        bool ShowsHPBar => !Data.isBoss && Data.scale >= 1.5f;
 
         public static Enemy CreateInstance(Transform parent)
         {
@@ -55,6 +56,12 @@ namespace CoreOverclock
             e.bodyTransform = e.body.transform;
             e.shieldRing = Visuals.Sprite("Shield", go.transform, ShapeSprites.Ring, new Color(0.6f, 0.8f, 1f, 0.7f), 11, 1.35f);
             e.shieldRing.enabled = false;
+            // Mini HP bar for elites (코어 골렘); bosses use the HUD bar instead.
+            e.hpBack = Visuals.Sprite("HPBack", go.transform, ShapeSprites.White, new Color(0f, 0f, 0f, 0.6f), 12);
+            e.hpBack.transform.localPosition = new Vector3(0f, 0.72f, 0f);
+            e.hpBack.transform.localScale = new Vector3(0.95f, 0.1f, 1f);
+            e.hpFill = Visuals.Sprite("HPFill", go.transform, ShapeSprites.White, new Color(1f, 0.35f, 0.4f), 13);
+            e.hpBack.enabled = e.hpFill.enabled = false;
             // Telegraph is parented to the pool root so enemy scale/rotation don't affect it.
             e.telegraph = Visuals.Sprite("Telegraph", parent, ShapeSprites.White, Color.white, 2);
             e.telegraph.enabled = false;
@@ -89,6 +96,7 @@ namespace CoreOverclock
             bodyTransform.rotation = Quaternion.identity;
             shieldRing.enabled = false;
             telegraph.enabled = false;
+            hpBack.enabled = hpFill.enabled = false;
 
             if (!brains.TryGetValue(data.behaviour, out brain))
             {
@@ -125,6 +133,13 @@ namespace CoreOverclock
             slowTimer -= dt;
             shieldTimer -= dt;
             shieldRing.enabled = shieldTimer > 0f;
+            if (ShowsHPBar && hp < MaxHP)
+            {
+                float r = Mathf.Clamp01(hp / MaxHP);
+                hpBack.enabled = hpFill.enabled = true;
+                hpFill.transform.localScale = new Vector3(0.9f * r, 0.07f, 1f);
+                hpFill.transform.localPosition = new Vector3(-0.45f * (1f - r), 0.72f, 0f);
+            }
 
             if (burnTimer > 0f)
             {
@@ -172,6 +187,7 @@ namespace CoreOverclock
 
             var popupColor = Shielded ? new Color(0.6f, 0.8f, 1f) : info.Crit ? new Color(1f, 0.85f, 0.2f) : Color.white;
             DamagePopups.Show(Position, amount, popupColor, info.Crit);
+            if (info.Crit) FxSystem.Burst(Position, new Color(1f, 0.9f, 0.4f), 4, 6f, 0.08f, 0.25f);
             AudioManager.Play(SfxId.Hit, 0.22f, 0.15f);
             if (info.Crit)
             {
@@ -197,6 +213,7 @@ namespace CoreOverclock
         {
             FxSystem.Pulse(Position, Data.color, 0.2f, 1.6f * Data.scale, 0.2f);
             AudioManager.Play(SfxId.EnemyDie, 0.3f, 0.12f);
+            FxSystem.Burst(Position, Data.color, IsBoss ? 40 : Data.scale >= 1.5f ? 14 : 6, IsBoss ? 14f : 7f, 0.1f * Mathf.Max(1f, Data.scale * 0.8f));
             ScrapSystem.Drop(Position, RollScrap());
             GameManager.Instance.RegisterKill(this);
             var b = brain;
@@ -222,6 +239,7 @@ namespace CoreOverclock
             rb.simulated = false;
             telegraph.enabled = false;
             shieldRing.enabled = false;
+            hpBack.enabled = hpFill.enabled = false;
             StartCoroutine(DissolveRoutine(delay));
         }
 
@@ -249,6 +267,7 @@ namespace CoreOverclock
             spawned = false;
             telegraph.enabled = false;
             shieldRing.enabled = false;
+            hpBack.enabled = hpFill.enabled = false;
             Active.Remove(this);
             StopAllCoroutines();
             release?.Invoke(this);

@@ -24,6 +24,8 @@
 - [x] **Phase 3** 콘텐츠: 적 5종(스크랩 비트·차지 러너·터렛 드론·마그마 버스트·코어 골렘) + 보스 3종(저거너트·오버시어·스크랩 레기온 코어), 무기 15종, 칩셋 25종, 웨이브 1~20 밸런싱
 - [x] **Phase 4** 폴리싱 & 데모: 코드 합성 효과음 22종·BGM 4곡, 블룸/비네트/색수차 포스트 프로세싱, 타이틀·설정 화면, 업적 7종 + Steam 연동 레이어, Next Fest용 데모 빌드
 
+- [x] **중간 점검 (v0.4.1)**: 대미지 숫자 정리, 처치·피격 파편 이펙트, 엘리트 HP 바, 저체력 경고, 무기 슬롯 표시, 첫 플레이 튜토리얼 힌트, 포커스 잃으면 자동 일시정지, 저거너트 난이도 완화
+
 ## 구조
 - `Assets/_Project/Scripts/Core` — GameManager(웨이브 흐름), HeatSystem, Loadout(스탯·시너지), Shop, 풀링/입력/유틸
 - `Assets/_Project/Scripts/Gameplay` — Player, Weapon, Projectile, Enemy, Spawner, Scrap, DataTower, Arena, FX

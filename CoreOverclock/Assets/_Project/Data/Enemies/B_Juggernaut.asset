@@ -20,13 +20,13 @@ MonoBehaviour:
   scale: 2.4
   maxHP: 300
   moveSpeed: 1.9
-  contactDamage: 6
+  contactDamage: 5
   knockbackResistance: 1
   scrapDrop: 25
   isBoss: 1
   attackRange: 9
-  windupTime: 1
-  chargeSpeed: 15
+  windupTime: 1.25
+  chargeSpeed: 13
   chargeDuration: 0.6
   recoverTime: 1.2
   preferredDistance: 6.5

@@ -264,7 +264,7 @@ namespace CoreOverclock
             if (pulseTimer <= 0f)
             {
                 pulseTimer = 1.2f;
-                FxSystem.Pulse(E.Position, new Color(0.6f, 0.8f, 1f, 0.35f), 0.5f, D.shieldRadius * 2.4f, 0.9f);
+                FxSystem.Pulse(E.Position, new Color(0.6f, 0.8f, 1f, 0.18f), 0.5f, D.shieldRadius * 2.4f, 0.9f);
             }
             return Chase();
         }

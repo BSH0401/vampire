@@ -240,8 +240,8 @@ namespace CoreOverclock.EditorTools
             {
                 e.id = "juggernaut"; e.displayName = "저거너트"; e.shape = EnemyShape.Arrow; e.behaviour = EnemyBehaviour.Charger; e.isBoss = true;
                 e.color = new Color(1f, 0.6f, 0.2f); e.scale = 2.4f;
-                e.maxHP = 300f; e.moveSpeed = 1.9f; e.contactDamage = 6f; e.knockbackResistance = 1f; e.scrapDrop = 25;
-                e.attackRange = 9f; e.windupTime = 1f; e.chargeSpeed = 15f; e.chargeDuration = 0.6f; e.recoverTime = 1.2f;
+                e.maxHP = 300f; e.moveSpeed = 1.9f; e.contactDamage = 5f; e.knockbackResistance = 1f; e.scrapDrop = 25;
+                e.attackRange = 9f; e.windupTime = 1.25f; e.chargeSpeed = 13f; e.chargeDuration = 0.6f; e.recoverTime = 1.2f;
                 e.projectileSpeed = 5.5f; e.projectileDamage = 3f;
             });
             set.Overseer = Enemy(root, "B_Overseer", e =>

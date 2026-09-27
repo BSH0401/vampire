@@ -82,6 +82,14 @@ namespace CoreOverclock
                 bloomIntensity = 1.4f;
             }
 
+            // Low HP: slow red heartbeat at the screen edges.
+            if (gm && gm.State == GameState.Combat && gm.Player.IsAlive && gm.Player.HP < gm.Player.MaxHP * 0.3f)
+            {
+                float beat = Mathf.Pow(Mathf.Abs(Mathf.Sin(Time.unscaledTime * 3f)), 4f);
+                vig = Mathf.Max(vig, 0.3f + 0.12f * beat);
+                vigColor = Color.Lerp(vigColor, new Color(0.55f, 0f, 0f), 0.8f);
+            }
+
             if (hitFlash > 0f)
             {
                 vig = Mathf.Max(vig, 0.22f + 0.28f * hitFlash);

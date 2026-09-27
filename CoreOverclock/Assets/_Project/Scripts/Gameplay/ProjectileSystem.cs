@@ -62,6 +62,7 @@ namespace CoreOverclock
             FxSystem.Pulse(center, Color.white, 0.2f, radius * 1.2f, 0.15f);
             CameraShake.Add(crit ? 0.25f : 0.1f);
             AudioManager.Play(SfxId.Explosion, 0.4f, 0.1f);
+            FxSystem.Burst(center, color, 8, radius * 5f, 0.12f, 0.35f);
 
             int n = Physics2D.OverlapCircle(center, radius, instance.filter, instance.overlaps);
             for (int i = 0; i < n; i++)

@@ -168,6 +168,7 @@ namespace CoreOverclock
             DamagePopups.Show(Position, amount, Palette.Danger, false);
             CameraShake.Add(0.35f);
             AudioManager.Play(SfxId.PlayerHurt, 0.7f);
+            FxSystem.Burst(Position, Palette.Danger, 8, 6f, 0.1f, 0.3f);
             PostFx.PlayerHit();
             TimeControl.HitStop();
 
