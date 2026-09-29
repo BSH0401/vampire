@@ -66,7 +66,7 @@ namespace CoreOverclock
                 instance.StartCoroutine(instance.BombletRoutine(center, radius, damage * Fusions.PrismBombletRatio, knockback, color, bomblets));
             FxSystem.Pulse(center, color, 0.3f, radius * 2.4f, 0.3f);
             FxSystem.Pulse(center, Color.white, 0.2f, radius * 1.2f, 0.15f);
-            CameraShake.Add(crit ? 0.25f : 0.1f);
+            CameraShake.Add(crit ? 0.08f : 0.04f, minor: true);
             AudioManager.Play(SfxId.Explosion, 0.4f, 0.1f);
             FxSystem.Burst(center, color, 8, radius * 5f, 0.12f, 0.35f);
 

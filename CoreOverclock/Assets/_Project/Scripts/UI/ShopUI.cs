@@ -40,10 +40,13 @@ namespace CoreOverclock
 
         public bool IsOpen => root.activeSelf;
 
-        public static ShopUI Create(Canvas canvas, GameManager gm, Shop shop, Loadout loadout)
+        SynergyPanel detail;
+
+        public static ShopUI Create(Canvas canvas, GameManager gm, Shop shop, Loadout loadout, SynergyPanel detail)
         {
             var ui = canvas.gameObject.AddComponent<ShopUI>();
             ui.gm = gm;
+            ui.detail = detail;
             ui.shop = shop;
             ui.loadout = loadout;
             ui.Build(canvas.transform);
@@ -74,32 +77,38 @@ namespace CoreOverclock
             {
                 int index = i;
                 float x = (i - (shop.SlotCount - 1) * 0.5f) * spacing;
-                cards.Add(BuildCard(dim, new Vector2(x, 170f), () => Feedback(shop.Buy(index)), () => shop.ToggleLock(index)));
+                cards.Add(BuildCard(dim, new Vector2(x, 180f), () => Feedback(shop.Buy(index)), () => shop.ToggleLock(index)));
             }
 
-            rerollButton = UIFactory.Button(dim, "리롤", new Vector2(-300f, -105f), new Vector2(360f, 70f), () => Feedback(shop.Reroll()));
+            rerollButton = UIFactory.Button(dim, "리롤", new Vector2(-300f, -78f), new Vector2(360f, 60f), () => Feedback(shop.Reroll()));
             rerollLabel = rerollButton.GetComponentInChildren<Text>();
-            nextButton = UIFactory.Button(dim, "다음 웨이브 ▶", new Vector2(300f, -105f), new Vector2(360f, 70f), gm.NextWave);
+            nextButton = UIFactory.Button(dim, "다음 웨이브 ▶", new Vector2(300f, -78f), new Vector2(360f, 60f), gm.NextWave);
 
             // Owned weapons
-            slotsTitle = UIFactory.Label(UIFactory.Rect("SlotsTitle", dim, c, c, new Vector2(-542f, -180f), new Vector2(400f, 36f)),
+            slotsTitle = UIFactory.Label(UIFactory.Rect("SlotsTitle", dim, c, c, new Vector2(-542f, -128f), new Vector2(400f, 32f)),
                 "장착 무기", 28, Palette.Text, TextAnchor.MiddleLeft);
             for (int i = 0; i < Player.MaxWeapons; i++)
             {
                 int index = i;
                 float x = -625f + i * 250f;
-                slots.Add(BuildSlot(dim, new Vector2(x, -270f), () => Feedback(shop.Sell(index))));
+                slots.Add(BuildSlot(dim, new Vector2(x, -226f), () => Feedback(shop.Sell(index))));
             }
 
-            synergyText = UIFactory.Label(UIFactory.Rect("Synergy", dim, c, c, new Vector2(-390f, -427f), new Vector2(1100f, 150f)),
-                "", 21, Palette.Text, TextAnchor.UpperLeft);
-            synergyText.lineSpacing = 1.02f;
-            statsText = UIFactory.Label(UIFactory.Rect("Stats", dim, c, c, new Vector2(560f, -435f), new Vector2(760f, 150f)),
+            // Compact synergy summary; the full tier list and fusion texts live in the detail window.
+            UIFactory.Label(UIFactory.Rect("SynergyHeader", dim, c, c, new Vector2(-805f, -318f), new Vector2(270f, 36f)),
+                "<b>시너지</b>", 24, Palette.Text, TextAnchor.MiddleLeft);
+            var detailButton = UIFactory.Button(dim, "상세 보기 (Tab)", new Vector2(-520f, -318f), new Vector2(250f, 42f), () => detail.Open());
+            detailButton.GetComponentInChildren<Text>().fontSize = 22;
+            synergyText = UIFactory.Label(UIFactory.Rect("Synergy", dim, c, c, new Vector2(-400f, -425f), new Vector2(1080f, 170f)),
+                "", 22, Palette.Text, TextAnchor.UpperLeft);
+            synergyText.lineSpacing = 1.05f;
+            statsText = UIFactory.Label(UIFactory.Rect("Stats", dim, c, c, new Vector2(560f, -375f), new Vector2(760f, 150f)),
                 "", 22, Palette.Text, TextAnchor.UpperLeft);
             statsText.lineSpacing = 1.15f;
-            chipsText = UIFactory.Label(UIFactory.Rect("Chips", dim, c, c, new Vector2(0f, -205f), new Vector2(1000f, 36f)),
+            chipsText = UIFactory.Label(UIFactory.Rect("Chips", dim, c, c, new Vector2(242f, -180f), new Vector2(700f, 36f)),
                 "", 22, Palette.Chip, TextAnchor.MiddleRight);
-            chipsText.rectTransform.anchoredPosition = new Vector2(242f, -180f);
+            chipsText.rectTransform.pivot = new Vector2(1f, 0.5f);
+            chipsText.rectTransform.anchoredPosition = new Vector2(620f, -128f);
 
             BuildReveal(dim);
             root.SetActive(false);
@@ -108,7 +117,7 @@ namespace CoreOverclock
         /// <summary>"새 퓨전 발견!" popup shown over the offer cards; it never blocks clicks.</summary>
         void BuildReveal(Transform parent)
         {
-            var box = UIFactory.Rect("FusionReveal", parent, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 170f), new Vector2(900f, 300f));
+            var box = UIFactory.Rect("FusionReveal", parent, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 180f), new Vector2(900f, 300f));
             UIFactory.Image(box, new Color(0.07f, 0.055f, 0.02f, 1f));
             UIFactory.Image(UIFactory.Rect("Top", box, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), Vector2.zero, new Vector2(900f, 6f)), Palette.Fusion);
             UIFactory.Image(UIFactory.Rect("Bottom", box, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), Vector2.zero, new Vector2(900f, 6f)), Palette.Fusion);
@@ -124,7 +133,7 @@ namespace CoreOverclock
         Card BuildCard(Transform parent, Vector2 pos, UnityEngine.Events.UnityAction buy, UnityEngine.Events.UnityAction toggleLock)
         {
             var card = new Card();
-            var rt = UIFactory.Rect("Card", parent, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), pos, new Vector2(370f, 430f));
+            var rt = UIFactory.Rect("Card", parent, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), pos, new Vector2(370f, 420f));
             card.Frame = UIFactory.Image(rt, new Color(0.07f, 0.09f, 0.15f, 1f));
             var header = UIFactory.Rect("Header", rt, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), Vector2.zero, new Vector2(370f, 8f));
             card.Header = UIFactory.Image(header, Color.white);
@@ -137,12 +146,12 @@ namespace CoreOverclock
                 "", 21, new Color(0.8f, 0.85f, 0.95f), TextAnchor.UpperLeft);
             card.Body.horizontalOverflow = HorizontalWrapMode.Wrap;
             card.Body.lineSpacing = 1.1f;
-            card.Price = UIFactory.Label(UIFactory.Rect("Price", rt, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 88f), new Vector2(340f, 40f)),
+            card.Price = UIFactory.Label(UIFactory.Rect("Price", rt, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 84f), new Vector2(340f, 40f)),
                 "", 32, Palette.Scrap);
 
-            card.Buy = UIFactory.Button(rt, "구매", new Vector2(-45f, -178f), new Vector2(250f, 56f), buy);
+            card.Buy = UIFactory.Button(rt, "구매", new Vector2(-45f, -171f), new Vector2(250f, 56f), buy);
             card.BuyLabel = card.Buy.GetComponentInChildren<Text>();
-            card.Lock = UIFactory.Button(rt, "잠금", new Vector2(130f, -178f), new Vector2(90f, 56f), toggleLock);
+            card.Lock = UIFactory.Button(rt, "잠금", new Vector2(130f, -171f), new Vector2(90f, 56f), toggleLock);
             card.LockLabel = card.Lock.GetComponentInChildren<Text>();
             card.LockLabel.fontSize = 24;
             return card;
@@ -151,15 +160,15 @@ namespace CoreOverclock
         Slot BuildSlot(Transform parent, Vector2 pos, UnityEngine.Events.UnityAction sell)
         {
             var slot = new Slot();
-            var rt = UIFactory.Rect("WeaponSlot", parent, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), pos, new Vector2(235f, 140f));
+            var rt = UIFactory.Rect("WeaponSlot", parent, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), pos, new Vector2(235f, 130f));
             slot.Frame = UIFactory.Image(rt, new Color(0.07f, 0.09f, 0.15f, 1f));
-            var bar = UIFactory.Rect("Bar", rt, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), Vector2.zero, new Vector2(6f, 140f));
+            var bar = UIFactory.Rect("Bar", rt, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), Vector2.zero, new Vector2(6f, 130f));
             slot.Bar = UIFactory.Image(bar, Color.white);
             slot.Name = UIFactory.Label(UIFactory.Rect("Name", rt, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -22f), new Vector2(220f, 34f)),
                 "", 24, Palette.Text);
             slot.Info = UIFactory.Label(UIFactory.Rect("Info", rt, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -54f), new Vector2(220f, 28f)),
-                "", 18, new Color(0.7f, 0.75f, 0.85f));
-            slot.Sell = UIFactory.Button(rt, "판매", new Vector2(0f, -38f), new Vector2(200f, 46f), sell);
+                "", 20, new Color(0.7f, 0.75f, 0.85f));
+            slot.Sell = UIFactory.Button(rt, "판매", new Vector2(0f, -41f), new Vector2(200f, 40f), sell);
             slot.SellLabel = slot.Sell.GetComponentInChildren<Text>();
             slot.SellLabel.fontSize = 22;
             return slot;
@@ -179,6 +188,7 @@ namespace CoreOverclock
             root.transform.SetAsLastSibling();
             Refresh();
             if (EventSystem.current) EventSystem.current.SetSelectedGameObject(nextButton.gameObject);
+            if (DevCommandLine.OpenDetail) detail.Open();
         }
 
         public void Hide() => root.SetActive(false);
@@ -189,6 +199,7 @@ namespace CoreOverclock
         {
             if (!IsOpen) return;
             scrapLabel.text = $"◆ {gm.Scrap}";
+            if (!detail.IsOpen && !detail.ConsumedInputThisFrame && SynergyPanel.TogglePressed) detail.Open();
             if (fusionNoticeTime > 0f && (fusionNoticeTime -= Time.unscaledDeltaTime) <= 0f)
             {
                 summary.text = summaryText;
@@ -226,9 +237,8 @@ namespace CoreOverclock
                 revealPanel.transform.SetAsLastSibling();
                 SetRevealAlpha(1f);
                 AudioManager.Play(SfxId.Victory, 0.5f, 0f);
-                CameraShake.Add(0.2f);
             }
-            summary.text = $"★ 퓨전 완성!  {f.Name}  —  {f.Effect}";
+            summary.text = $"★ 퓨전 완성!  {f.Name}   <size=22>(효과는 상세 보기에서 확인)</size>";
             summary.color = Palette.Fusion;
             fusionNoticeTime = 3.5f;
         }
@@ -269,11 +279,11 @@ namespace CoreOverclock
                 }
             }
 
-            chipsText.text = loadout.Chips.Count == 0 ? "칩셋 없음" : "칩셋: " + ChipSummary();
+            chipsText.text = loadout.Chips.Count == 0 ? "칩셋 없음" : $"칩셋 {loadout.Chips.Count}개: " + ChipSummary();
 
             var syn = loadout.Synergy;
-            var sb = new StringBuilder("<b>시너지</b>\n");
-            foreach (WeaponTag tag in System.Enum.GetValues(typeof(WeaponTag))) sb.Append(syn.Describe(tag)).Append('\n');
+            var sb = new StringBuilder();
+            foreach (WeaponTag tag in System.Enum.GetValues(typeof(WeaponTag))) sb.Append(CompactSynergy(syn, tag)).Append('\n');
             sb.Append(FusionSummary());
             synergyText.text = sb.ToString();
             statsText.text = StatsSummary();
@@ -320,10 +330,10 @@ namespace CoreOverclock
         string FusionSummary()
         {
             var hex = ColorUtility.ToHtmlStringRGB(Palette.Fusion);
-            if (loadout.ActiveFusions.Count == 0) return $"<color=#{hex}>퓨전</color>  <color=#5A6378>특정 무기 2개를 함께 장착하면 발동</color>";
+            if (loadout.ActiveFusions.Count == 0) return $"<color=#{hex}>퓨전</color>   <color=#5A6378>특정 무기 2개를 함께 장착하면 발동</color>";
             var names = new List<string>();
             foreach (var f in Fusions.All) if (loadout.Has(f.Id)) names.Add(f.Name);
-            return $"<color=#{hex}>퓨전  {string.Join(" · ", names)}</color>";
+            return $"<color=#{hex}>퓨전   {string.Join(" · ", names)}</color>";
         }
 
         static string WeaponBody(WeaponData w)
@@ -359,7 +369,27 @@ namespace CoreOverclock
                 counts[chip.displayName] = counts.TryGetValue(chip.displayName, out var n) ? n + 1 : 1;
             var parts = new List<string>();
             foreach (var kv in counts) parts.Add(kv.Value > 1 ? $"{kv.Key} x{kv.Value}" : kv.Key);
-            return string.Join(", ", parts);
+            // Keep the line short; long chip lists would run into the weapon slot title.
+            const int shown = 3;
+            if (parts.Count <= shown) return string.Join(", ", parts);
+            return string.Join(", ", parts.GetRange(0, shown)) + $" 외 {parts.Count - shown}종";
+        }
+
+        /// <summary>One short line per tag: count, the best active tier and the next goal.</summary>
+        static string CompactSynergy(SynergyState syn, WeaponTag tag)
+        {
+            int n = syn.Count(tag);
+            var hex = ColorUtility.ToHtmlStringRGB(WeaponTags.ColorOf(tag));
+            string active = null, next = null;
+            foreach (var (count, text) in SynergyState.Tiers(tag))
+            {
+                if (n >= count) active = text;
+                else if (next == null) next = $"{count}개: {text}";
+            }
+            var sb = new StringBuilder($"<color=#{hex}>{WeaponTags.KoreanName(tag)} {n}</color>   ");
+            sb.Append(active != null ? $"<color=#FFFFFF>{active}</color>" : "<color=#5A6378>효과 없음</color>");
+            if (next != null) sb.Append($"   <color=#5A6378>▶ {next}</color>");
+            return sb.ToString();
         }
 
         string StatsSummary()

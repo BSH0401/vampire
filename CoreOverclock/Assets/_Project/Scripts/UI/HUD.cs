@@ -16,6 +16,7 @@ namespace CoreOverclock
         RectTransform bossFill;
         Text bossLabel;
         GameObject gameOverPanel, pausePanel;
+        SynergyPanel synergyPanel;
         Text gameOverTitle, gameOverStats;
         Button restartButton, resumeButton;
         float bannerTimer, toastTimer, hintTimer;
@@ -82,11 +83,13 @@ namespace CoreOverclock
             pausePanel = BuildPanel("PausePanel", out var pauseTitle, out var pauseStats);
             pauseTitle.text = "일시정지";
             pauseStats.text = "<size=24>이동: WASD / 방향키 / 좌스틱\n긴급 방열: Space / 우클릭 / A·RB\n일시정지: ESC / Start</size>";
-            pauseStats.rectTransform.anchoredPosition = new Vector2(0f, -120f);
-            resumeButton = UIFactory.Button(pausePanel.transform, "계속하기", new Vector2(0f, -40f), new Vector2(420f, 80f), () => gm.SetPaused(false));
-            UIFactory.Button(pausePanel.transform, "설정", new Vector2(0f, -130f), new Vector2(420f, 72f),
+            pauseStats.rectTransform.anchoredPosition = new Vector2(0f, -95f);
+            resumeButton = UIFactory.Button(pausePanel.transform, "계속하기", new Vector2(0f, -10f), new Vector2(420f, 72f), () => gm.SetPaused(false));
+            UIFactory.Button(pausePanel.transform, "시너지 · 퓨전", new Vector2(0f, -90f), new Vector2(420f, 64f),
+                () => { pausePanel.SetActive(false); synergyPanel.Open(() => Show(pausePanel, resumeButton)); });
+            UIFactory.Button(pausePanel.transform, "설정", new Vector2(0f, -165f), new Vector2(420f, 64f),
                 () => settings.Open(() => pausePanel.SetActive(false), () => Show(pausePanel, resumeButton)));
-            UIFactory.Button(pausePanel.transform, "타이틀로", new Vector2(0f, -215f), new Vector2(420f, 72f), gm.ReturnToTitle);
+            UIFactory.Button(pausePanel.transform, "타이틀로", new Vector2(0f, -240f), new Vector2(420f, 64f), gm.ReturnToTitle);
 
             toast = UIFactory.Label(UIFactory.Rect("Toast", root, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-32f, -80f), new Vector2(700f, 44f)),
                 "", 28, Palette.Scrap, TextAnchor.MiddleRight);
@@ -131,7 +134,7 @@ namespace CoreOverclock
             var dimImage = UIFactory.Image(dim, new Color(0f, 0f, 0.02f, 0.72f));
             dimImage.raycastTarget = true;
             var box = UIFactory.Rect("Box", dim, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(900f, 560f));
-            UIFactory.Image(box, new Color(0.05f, 0.07f, 0.12f, 0.95f));
+            UIFactory.Image(box, new Color(0.05f, 0.07f, 0.12f, 1f)); // linear blending makes <1 alpha look see-through
             var frame = UIFactory.Rect("Frame", box, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), Vector2.zero, new Vector2(900f, 6f));
             UIFactory.Image(frame, Palette.Player);
             title = UIFactory.Label(UIFactory.Rect("Title", box, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -40f), new Vector2(860f, 90f)),
@@ -228,6 +231,7 @@ namespace CoreOverclock
         }
 
         public void SetSettingsPanel(SettingsPanel panel) => settings = panel;
+        public void SetSynergyPanel(SynergyPanel panel) => synergyPanel = panel;
 
         /// <summary>Tutorial line above the heat gauge.</summary>
         public void ShowHint(string text, float duration)

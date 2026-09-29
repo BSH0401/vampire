@@ -19,6 +19,7 @@ namespace CoreOverclock
     ///   -timescale N          run the simulation N times faster (balance sweeps)
     ///   -loadout a,b,c        start with these weapon ids (fusion tests)
     ///   -lab N                with -title: open the 연구소 on tab N (screenshots)
+    ///   -detail               open the 시너지·퓨전 window whenever the shop opens (screenshots)
     ///   -meta N               pretend every permanent upgrade is level N and everything is unlocked
     /// </summary>
     public class DevCommandLine : MonoBehaviour
@@ -31,6 +32,7 @@ namespace CoreOverclock
         public static int MetaLevel = -1;
         public static string[] Loadout;
         public static int LabTab = -1;
+        public static bool OpenDetail;
         static string shotDir;
         static float[] shotTimes = { 5f, 12f };
         static float quitAfter = -1f;
@@ -46,6 +48,7 @@ namespace CoreOverclock
             MetaLevel = -1;
             Loadout = null;
             LabTab = -1;
+            OpenDetail = false;
             WaveTimeOverride = -1f;
             StartWave = 1;
             shotDir = null;
@@ -67,6 +70,7 @@ namespace CoreOverclock
                     case "-wavetime": WaveTimeOverride = ParseFloat(next, -1f); Enabled = true; break;
                     case "-loadout": Loadout = next?.Split(','); Enabled = true; break;
                     case "-lab": LabTab = (int)ParseFloat(next, 0f); break;
+                    case "-detail": OpenDetail = true; break;
                     case "-meta": MetaLevel = (int)ParseFloat(next, 0f); break;
                     case "-startwave": StartWave = (int)ParseFloat(next, 1f); break;
                     case "-shots": shotDir = next; Enabled = true; break;

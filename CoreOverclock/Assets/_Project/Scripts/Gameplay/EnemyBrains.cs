@@ -134,7 +134,7 @@ namespace CoreOverclock
                         {
                             // Juggernaut: slam at the end of each charge.
                             Ring(14, Random.Range(0f, 30f), D.projectileSpeed, D.projectileDamage, 0.2f);
-                            CameraShake.Add(0.3f);
+                            CameraShake.Add(0.2f);
                         }
                     }
                     return dashDir * (D.chargeSpeed * E.SpeedMultiplier);

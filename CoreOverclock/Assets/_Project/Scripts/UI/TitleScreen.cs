@@ -99,7 +99,7 @@ namespace CoreOverclock
             UIFactory.Image(dim, new Color(0f, 0f, 0.02f, 0.8f)).raycastTarget = true;
             root = dim.gameObject;
             var box = UIFactory.Rect("Box", dim, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(860f, 800f));
-            UIFactory.Image(box, new Color(0.05f, 0.07f, 0.12f, 0.97f));
+            UIFactory.Image(box, new Color(0.05f, 0.07f, 0.12f, 1f));
             UIFactory.Image(UIFactory.Rect("Frame", box, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), Vector2.zero, new Vector2(860f, 6f)), Palette.Player);
             // Rows below are laid out for the original 700px box; shift them up to fit the reset row.
             var rows = UIFactory.Rect("Rows", box, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 20f), new Vector2(860f, 700f));
@@ -109,7 +109,7 @@ namespace CoreOverclock
             master = Row(rows, "전체 볼륨", 190f, () => GameSettings.MasterVolume -= 0.1f, () => GameSettings.MasterVolume += 0.1f);
             musicVol = Row(rows, "음악", 100f, () => GameSettings.MusicVolume -= 0.1f, () => GameSettings.MusicVolume += 0.1f);
             sfxVol = Row(rows, "효과음", 10f, () => GameSettings.SfxVolume -= 0.1f, () => GameSettings.SfxVolume += 0.1f);
-            shake = Toggle(rows, "화면 흔들림", -80f, () => GameSettings.ScreenShake = !GameSettings.ScreenShake);
+            shake = Toggle(rows, "화면 흔들림", -80f, () => GameSettings.ShakeLevel++);
             fullscreen = Toggle(rows, "전체 화면", -170f, () => GameSettings.Fullscreen = !GameSettings.Fullscreen);
             resetLabel = Toggle(rows, "진행 초기화", -260f, ResetProgress);
             closeButton = UIFactory.Button(box, "닫기", new Vector2(0f, -330f), new Vector2(360f, 72f), Close);
@@ -173,7 +173,7 @@ namespace CoreOverclock
             master.text = Pct(GameSettings.MasterVolume);
             musicVol.text = Pct(GameSettings.MusicVolume);
             sfxVol.text = Pct(GameSettings.SfxVolume);
-            shake.text = GameSettings.ScreenShake ? "켜짐" : "꺼짐";
+            shake.text = GameSettings.ShakeLevelNames[GameSettings.ShakeLevel];
             fullscreen.text = GameSettings.Fullscreen ? "켜짐" : "꺼짐";
             resetLabel.text = resetArmed ? "<color=#FF6B6B>정말 초기화?</color>" : "초기화";
         }

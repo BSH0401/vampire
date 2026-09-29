@@ -27,6 +27,7 @@ namespace CoreOverclock
         Tutorial tutorial;
         SettingsPanel settings;
         LabScreen lab;
+        SynergyPanel synergyPanel;
         static bool skipTitleOnce; // "다시 시작" reloads the scene straight into a run
         DataTower[] towers;
         WaveDefinition currentWave;
@@ -106,12 +107,14 @@ namespace CoreOverclock
             hud = HUD.Create(this);
             DamagePopups.Create(hud.Canvas);
             Shop = new Shop(shopDatabase, Loadout, this);
-            shopUI = ShopUI.Create(hud.Canvas, this, Shop, Loadout);
+            synergyPanel = SynergyPanel.Create(hud.Canvas, this);
+            shopUI = ShopUI.Create(hud.Canvas, this, Shop, Loadout, synergyPanel);
             settings = SettingsPanel.Create(hud.Canvas);
             lab = LabScreen.Create(hud.Canvas, this);
             title = TitleScreen.Create(hud.Canvas, this, settings, lab);
             tutorial = new Tutorial(hud);
             hud.SetSettingsPanel(settings);
+            hud.SetSynergyPanel(synergyPanel);
             Scrap += DevCommandLine.StartScrap + MetaProgress.StartScrapBonus;
             if (DevCommandLine.Loadout != null)
                 foreach (var id in DevCommandLine.Loadout)
@@ -185,7 +188,8 @@ namespace CoreOverclock
 
         void Update()
         {
-            if (GameInput.PausePressed && !settings.IsOpen && (State == GameState.Combat || TimeControl.Paused))
+            bool panelOpen = settings.IsOpen || synergyPanel.IsOpen || synergyPanel.ConsumedInputThisFrame;
+            if (GameInput.PausePressed && !panelOpen && (State == GameState.Combat || TimeControl.Paused))
                 SetPaused(!TimeControl.Paused);
             AudioManager.Muffled = TimeControl.Paused || (State == GameState.Combat && Heat.State == HeatState.Meltdown);
 
@@ -366,7 +370,7 @@ namespace CoreOverclock
             if (!enemy.IsBoss || State != GameState.Combat) return;
             bossKills++;
 
-            CameraShake.Add(0.8f);
+            CameraShake.Add(0.5f);
             FxSystem.Pulse(enemy.Position, enemy.Data.color, 0.5f, 14f, 0.8f);
             AudioManager.Play(SfxId.Explosion, 1f, 0f);
             if (enemy.Data.id == "juggernaut") Unlock(Achievements.Juggernaut);

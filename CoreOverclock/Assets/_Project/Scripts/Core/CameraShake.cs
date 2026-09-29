@@ -9,18 +9,27 @@ namespace CoreOverclock
     [RequireComponent(typeof(Camera))]
     public class CameraShake : MonoBehaviour
     {
-        const float MaxOffset = 0.45f;
-        const float MaxAngle = 1.5f;
-        const float Decay = 1.8f;
+        const float MaxOffset = 0.3f;
+        const float MaxAngle = 0.4f;   // rotation is the main motion-sickness trigger: keep it tiny
+        const float Decay = 2.2f;
+        /// <summary>Frequent events (explosions, bomber blasts) may only push trauma up to this.</summary>
+        const float MinorCap = 0.2f;
 
         static CameraShake instance;
         Camera cam;
         Vector3 basePosition;
         float trauma;
 
-        public static void Add(float amount)
+        /// <param name="minor">Frequent, small events: they never build up past <see cref="MinorCap"/>.</param>
+        public static void Add(float amount, bool minor = false)
         {
-            if (instance && GameSettings.ScreenShake) instance.trauma = Mathf.Min(1f, instance.trauma + amount);
+            if (!instance) return;
+            float scale = GameSettings.ShakeStrength;
+            if (scale <= 0f) return;
+            amount *= scale;
+            float cap = minor ? MinorCap * scale : 1f;
+            if (instance.trauma >= cap) return;
+            instance.trauma = Mathf.Min(cap, instance.trauma + amount);
         }
 
         void Awake()

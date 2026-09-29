@@ -190,11 +190,6 @@ namespace CoreOverclock
             DamagePopups.Show(Position, amount, popupColor, info.Crit);
             if (info.Crit) FxSystem.Burst(Position, new Color(1f, 0.9f, 0.4f), 4, 6f, 0.08f, 0.25f);
             AudioManager.Play(SfxId.Hit, 0.22f, 0.15f);
-            if (info.Crit)
-            {
-                CameraShake.Add(0.15f);
-                TimeControl.HitStop();
-            }
 
             if (hp <= 0f) Die();
         }
@@ -294,7 +289,7 @@ namespace CoreOverclock
         {
             FxSystem.Pulse(center, color, 0.3f, radius * 2.4f, 0.35f);
             FxSystem.Pulse(center, Color.white, 0.2f, radius * 1.4f, 0.2f);
-            CameraShake.Add(0.3f);
+            CameraShake.Add(0.15f, minor: true);
             AudioManager.Play(SfxId.Explosion, 0.6f);
 
             var player = GameManager.Instance.Player;
