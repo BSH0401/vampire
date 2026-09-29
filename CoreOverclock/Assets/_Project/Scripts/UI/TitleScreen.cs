@@ -56,7 +56,8 @@ namespace CoreOverclock
 
         public void Show()
         {
-            labLabel.text = $"연구소  <color=#{ColorUtility.ToHtmlStringRGB(Palette.Fragment)}>{MetaProgress.Currency} {MetaProgress.Fragments}</color>";
+            labLabel.text = $"연구소  <color=#{ColorUtility.ToHtmlStringRGB(Palette.Fragment)}>{MetaProgress.Currency} {MetaProgress.Fragments}</color>" +
+                            (MetaProgress.HasUnseen ? "  <color=#FF6B6B><size=22>NEW</size></color>" : "");
             footerRight.text = $"퓨전 도감 {MetaProgress.DiscoveredCount} / {Fusions.All.Length}  ·  업적 {SteamService.UnlockedCount()} / {Achievements.All.Length}" +
                                (SteamService.Available ? "  ·  Steam 연결됨" : "");
             root.SetActive(true);

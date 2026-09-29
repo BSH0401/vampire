@@ -51,6 +51,8 @@ namespace CoreOverclock
         public float TimeLeft { get; private set; }
         public int Scrap { get; private set; }
         public int TotalKills { get; private set; }
+        /// <summary>A fusion became active; the flag is true the first time it is ever discovered.</summary>
+        public event System.Action<FusionId, bool> FusionCompleted;
         public bool PlayerCanMove => State == GameState.Combat || State == GameState.Resolving;
 
         void Awake()
@@ -321,8 +323,10 @@ namespace CoreOverclock
         {
             AudioManager.Play(SfxId.Overclock, 0.5f, 0f);
             if (DevCommandLine.Enabled) Debug.Log($"[Dev] Fusion {id} wave={Wave}");
-            if (MetaProgress.Discover(id)) Unlock(Achievements.FirstFusion);
+            bool first = MetaProgress.Discover(id);
+            if (first) Unlock(Achievements.FirstFusion);
             if (MetaProgress.DiscoveredCount >= Fusions.All.Length) Unlock(Achievements.FusionCodex);
+            FusionCompleted?.Invoke(id, first);
         }
 
         public void SetPaused(bool paused)

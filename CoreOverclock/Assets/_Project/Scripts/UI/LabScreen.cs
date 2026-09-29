@@ -247,20 +247,15 @@ namespace CoreOverclock
                 int col = i % 2, row = i / 2;
                 var card = Card($"Fusion_{f.Id}", new Vector2((col - 0.5f) * 850f, 240f - row * 150f), new Vector2(830f, 136f),
                     found ? Palette.Fusion : Muted);
-                AddText(card, found ? $"★ {f.Name}" : "???", new Vector2(28f, 38f), new Vector2(780f, 44f), 32, found ? Palette.Fusion : Muted);
-                // Undiscovered entries hint at half of the recipe.
-                string recipe = found ? f.Recipe : HalfRecipe(f.Recipe);
-                AddText(card, recipe, new Vector2(28f, -4f), new Vector2(780f, 34f), 24, found ? Palette.Text : Muted);
-                AddText(card, found ? f.Effect : "아직 발견하지 못한 퓨전", new Vector2(28f, -42f), new Vector2(780f, 34f), 22, SubText);
+                string badge = MetaProgress.IsUnseen(f.Id) ? "  <color=#FF6B6B><size=22>NEW</size></color>" : "";
+                AddText(card, found ? $"★ {f.Name}{badge}" : "???", new Vector2(28f, 38f), new Vector2(780f, 44f), 32, found ? Palette.Fusion : Muted);
+                // Recipes stay secret until the combination is completed in a run.
+                AddText(card, found ? f.Recipe : "??? + ???", new Vector2(28f, -4f), new Vector2(780f, 34f), 24, found ? Palette.Text : Muted);
+                AddText(card, found ? f.Effect : "무기를 모으다 보면 발견할 수 있습니다", new Vector2(28f, -42f), new Vector2(780f, 34f), 22, SubText);
             }
             var footer = UIFactory.Rect("CodexCount", content, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -330f), new Vector2(800f, 40f));
             UIFactory.Label(footer, $"발견 {MetaProgress.DiscoveredCount} / {all.Length}", 26, Palette.Fusion);
-        }
-
-        static string HalfRecipe(string recipe)
-        {
-            int plus = recipe.IndexOf(" + ", System.StringComparison.Ordinal);
-            return plus > 0 ? recipe.Substring(0, plus) + " + ???" : "???";
+            MetaProgress.MarkCodexSeen(); // badges were drawn above; they clear for next time
         }
 
         // ─────────────── 시작 무기 ───────────────

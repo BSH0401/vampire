@@ -33,6 +33,10 @@ namespace CoreOverclock
         readonly List<Slot> slots = new();
         string summaryText;
         float fusionNoticeTime;
+        GameObject revealPanel;
+        Text revealName, revealRecipe, revealEffect;
+        float revealTime;
+        const float RevealDuration = 4f;
 
         public bool IsOpen => root.activeSelf;
 
@@ -45,7 +49,7 @@ namespace CoreOverclock
             ui.Build(canvas.transform);
             shop.Changed += ui.Refresh;
             loadout.Changed += ui.Refresh;
-            loadout.FusionActivated += ui.OnFusionActivated;
+            gm.FusionCompleted += ui.OnFusionCompleted;
             return ui;
         }
 
@@ -97,7 +101,24 @@ namespace CoreOverclock
                 "", 22, Palette.Chip, TextAnchor.MiddleRight);
             chipsText.rectTransform.anchoredPosition = new Vector2(242f, -180f);
 
+            BuildReveal(dim);
             root.SetActive(false);
+        }
+
+        /// <summary>"새 퓨전 발견!" popup shown over the offer cards; it never blocks clicks.</summary>
+        void BuildReveal(Transform parent)
+        {
+            var box = UIFactory.Rect("FusionReveal", parent, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 170f), new Vector2(900f, 300f));
+            UIFactory.Image(box, new Color(0.07f, 0.055f, 0.02f, 1f));
+            UIFactory.Image(UIFactory.Rect("Top", box, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), Vector2.zero, new Vector2(900f, 6f)), Palette.Fusion);
+            UIFactory.Image(UIFactory.Rect("Bottom", box, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), Vector2.zero, new Vector2(900f, 6f)), Palette.Fusion);
+            Vector2 top = new(0.5f, 1f);
+            UIFactory.Label(UIFactory.Rect("Header", box, top, top, new Vector2(0f, -30f), new Vector2(860f, 40f)), "새 퓨전 발견!", 30, new Color(1f, 0.95f, 0.8f));
+            revealName = UIFactory.Label(UIFactory.Rect("Name", box, top, top, new Vector2(0f, -80f), new Vector2(860f, 80f)), "", 64, Palette.Fusion);
+            revealRecipe = UIFactory.Label(UIFactory.Rect("Recipe", box, top, top, new Vector2(0f, -170f), new Vector2(860f, 40f)), "", 30, Palette.Text);
+            revealEffect = UIFactory.Label(UIFactory.Rect("Effect", box, top, top, new Vector2(0f, -220f), new Vector2(860f, 40f)), "", 26, new Color(0.8f, 0.85f, 0.95f));
+            revealPanel = box.gameObject;
+            revealPanel.SetActive(false);
         }
 
         Card BuildCard(Transform parent, Vector2 pos, UnityEngine.Events.UnityAction buy, UnityEngine.Events.UnityAction toggleLock)
@@ -152,6 +173,8 @@ namespace CoreOverclock
             summary.text = summaryText;
             summary.color = new Color(0.7f, 0.78f, 0.9f);
             fusionNoticeTime = 0f;
+            revealTime = 0f;
+            revealPanel.SetActive(false);
             root.SetActive(true);
             root.transform.SetAsLastSibling();
             Refresh();
@@ -171,12 +194,40 @@ namespace CoreOverclock
                 summary.text = summaryText;
                 summary.color = new Color(0.7f, 0.78f, 0.9f);
             }
+            if (revealTime > 0f)
+            {
+                revealTime -= Time.unscaledDeltaTime;
+                float age = RevealDuration - revealTime;
+                // Pop in, hold, then fade out over the last half second.
+                float scale = age < 0.18f ? Mathf.Lerp(0.6f, 1.08f, age / 0.18f) : Mathf.Lerp(1.08f, 1f, Mathf.Clamp01((age - 0.18f) / 0.12f));
+                revealPanel.transform.localScale = Vector3.one * scale;
+                SetRevealAlpha(Mathf.Clamp01(revealTime / 0.5f));
+                if (revealTime <= 0f) revealPanel.SetActive(false);
+            }
         }
 
-        void OnFusionActivated(FusionId id)
+        void SetRevealAlpha(float a)
+        {
+            foreach (var g in revealPanel.GetComponentsInChildren<Graphic>())
+                g.canvasRenderer.SetAlpha(a);
+        }
+
+        void OnFusionCompleted(FusionId id, bool firstTime)
         {
             if (!IsOpen) return;
             var f = Fusions.Get(id);
+            if (firstTime)
+            {
+                revealName.text = $"★ {f.Name}";
+                revealRecipe.text = f.Recipe;
+                revealEffect.text = f.Effect;
+                revealTime = RevealDuration;
+                revealPanel.SetActive(true);
+                revealPanel.transform.SetAsLastSibling();
+                SetRevealAlpha(1f);
+                AudioManager.Play(SfxId.Victory, 0.5f, 0f);
+                CameraShake.Add(0.2f);
+            }
             summary.text = $"★ 퓨전 완성!  {f.Name}  —  {f.Effect}";
             summary.color = Palette.Fusion;
             fusionNoticeTime = 3.5f;
@@ -249,11 +300,21 @@ namespace CoreOverclock
 
         string FusionPreview(WeaponData w)
         {
+            // Known recipes are named; undiscovered ones only give a vague signal (발견의 재미).
             var completed = loadout.FusionsCompletedBy(w);
             if (completed.Count == 0) return "";
             var names = new List<string>();
-            foreach (var id in completed) names.Add(Fusions.Get(id).Name);
-            return $"<color=#{ColorUtility.ToHtmlStringRGB(Palette.Fusion)}>★ 퓨전 완성: {string.Join(", ", names)}</color>\n";
+            bool unknown = false;
+            foreach (var id in completed)
+            {
+                if (MetaProgress.IsDiscovered(id)) names.Add(Fusions.Get(id).Name);
+                else unknown = true;
+            }
+            var hex = ColorUtility.ToHtmlStringRGB(Palette.Fusion);
+            var sb = new StringBuilder();
+            if (names.Count > 0) sb.Append($"<color=#{hex}>★ 퓨전 완성: {string.Join(", ", names)}</color>\n");
+            if (unknown) sb.Append($"<color=#{hex}>☆ 미지의 반응 감지…</color>\n");
+            return sb.ToString();
         }
 
         string FusionSummary()

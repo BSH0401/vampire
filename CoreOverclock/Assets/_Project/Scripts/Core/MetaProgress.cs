@@ -41,6 +41,7 @@ namespace CoreOverclock
         static readonly int[] levels = new int[Enum.GetValues(typeof(MetaUpgradeId)).Length];
         static readonly HashSet<string> unlocked = new();
         static readonly HashSet<FusionId> discovered = new();
+        static readonly HashSet<FusionId> unseen = new(); // discovered but not yet viewed in the 도감
         static string startWeapon;
         static bool devUnlockAll;
 
@@ -59,6 +60,9 @@ namespace CoreOverclock
             discovered.Clear();
             foreach (var name in PlayerPrefs.GetString(Prefix + "fusions", "").Split(',', StringSplitOptions.RemoveEmptyEntries))
                 if (Enum.TryParse(name, out FusionId f)) discovered.Add(f);
+            unseen.Clear();
+            foreach (var name in PlayerPrefs.GetString(Prefix + "fusions_new", "").Split(',', StringSplitOptions.RemoveEmptyEntries))
+                if (Enum.TryParse(name, out FusionId f)) unseen.Add(f);
             startWeapon = PlayerPrefs.GetString(Prefix + "start_weapon", "");
 
             // -meta N: balance sweeps with N upgrade levels and everything unlocked (never saved).
@@ -79,6 +83,9 @@ namespace CoreOverclock
             var names = new List<string>();
             foreach (var f in discovered) names.Add(f.ToString());
             PlayerPrefs.SetString(Prefix + "fusions", string.Join(",", names));
+            names.Clear();
+            foreach (var f in unseen) names.Add(f.ToString());
+            PlayerPrefs.SetString(Prefix + "fusions_new", string.Join(",", names));
             PlayerPrefs.SetString(Prefix + "start_weapon", startWeapon ?? "");
             PlayerPrefs.Save();
         }
@@ -153,12 +160,24 @@ namespace CoreOverclock
         {
             Load();
             if (!discovered.Add(id)) return false;
+            unseen.Add(id);
             Save();
             return true;
         }
 
         public static bool IsDiscovered(FusionId id) { Load(); return discovered.Contains(id); }
         public static int DiscoveredCount { get { Load(); return discovered.Count; } }
+        public static bool IsUnseen(FusionId id) { Load(); return unseen.Contains(id); }
+        public static bool HasUnseen { get { Load(); return unseen.Count > 0; } }
+
+        /// <summary>Clears the NEW badges once the player has looked at the 도감.</summary>
+        public static void MarkCodexSeen()
+        {
+            Load();
+            if (unseen.Count == 0) return;
+            unseen.Clear();
+            Save();
+        }
 
         // ─────────────── Run rewards ───────────────
 
@@ -179,6 +198,7 @@ namespace CoreOverclock
             Array.Clear(levels, 0, levels.Length);
             unlocked.Clear();
             discovered.Clear();
+            unseen.Clear();
             startWeapon = "";
             Save();
         }
