@@ -4,7 +4,17 @@
 
 > "제한 시간 45초, 몰려오는 고철 군단을 부수고 코어를 오버클럭하여 궁극의 살인 병기를 조립하라."
 
-## 열기 / 실행
+## 다운로드 (Windows)
+최신 버전: **[v0.6.0 릴리스 페이지](https://github.com/BSH0401/vampire/releases/latest)**
+
+| 빌드 | 내용 | 다운로드 |
+|---|---|---|
+| 정식판 | 웨이브 1~20 + 최종 보스 | [CoreOverclock_v0.6.0_Windows.zip](https://github.com/BSH0401/vampire/releases/download/v0.6.0/CoreOverclock_v0.6.0_Windows.zip) (약 36MB) |
+| 데모판 | 웨이브 1~10 | [CoreOverclock_v0.6.0_Demo.zip](https://github.com/BSH0401/vampire/releases/download/v0.6.0/CoreOverclock_v0.6.0_Demo.zip) (약 36MB) |
+
+압축을 풀고 `CoreOverclock.exe`(데모는 `CoreOverclockDemo.exe`)를 실행하세요. 설치는 필요 없습니다. 이전 버전은 [Releases](https://github.com/BSH0401/vampire/releases)에서 볼 수 있습니다.
+
+## 에디터에서 열기 / 실행
 1. Unity Hub → **Add** → `CoreOverclock` 폴더 (에디터 6000.3.11f1)
 2. `Assets/_Project/Scenes/Arena.unity` 열고 Play
 3. 데이터/씬을 다시 생성하려면 메뉴 **Core Overclock → Setup Project**
