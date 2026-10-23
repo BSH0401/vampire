@@ -246,10 +246,10 @@ namespace CoreOverclock
         {
             var sb = new System.Text.StringBuilder("무기 ");
             var weapons = gm.Loadout.Weapons;
-            for (int i = 0; i < Player.MaxWeapons; i++)
+            for (int i = 0; i < gm.Loadout.MaxWeapons; i++)
             {
                 if (i < weapons.Count)
-                    sb.Append($"<color=#{ColorUtility.ToHtmlStringRGB(WeaponTags.ColorOf(weapons[i].Data.tag))}>■</color>");
+                    sb.Append($"<color=#{ColorUtility.ToHtmlStringRGB(WeaponTags.ColorOf(weapons[i].Data.tag))}>■</color>{(weapons[i].Grade > 1 ? $"<size=18><color=#{WeaponGrades.Hex(weapons[i].Grade)}>{WeaponGrades.Roman(weapons[i].Grade)}</color></size>" : "")} ");
                 else sb.Append("<color=#3A4050>□</color>");
             }
             weaponStrip.text = sb.ToString();

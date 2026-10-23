@@ -95,6 +95,7 @@ namespace CoreOverclock
         public static readonly Color Chip = new(0.55f, 1f, 0.6f);
         public static readonly Color Fusion = new(1f, 0.82f, 0.3f);
         public static readonly Color Fragment = new(0.75f, 0.6f, 1f);
+        public static readonly Color BlackMarket = new(0.85f, 0.3f, 1f);
     }
 
     public static class GameInput

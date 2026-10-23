@@ -14,8 +14,9 @@ namespace CoreOverclock
     public class HeatSystem : MonoBehaviour
     {
         public const float Max = 100f;
-        public const float OverclockThreshold = 70f;
-        const float OverclockExitThreshold = 65f; // hysteresis so the state doesn't flicker at the line
+        /// <summary>70%, or lower for the 용광로 코어.</summary>
+        public static float OverclockThreshold => Cores.Current.OverclockThreshold;
+        static float OverclockExitThreshold => OverclockThreshold - 5f; // hysteresis so the state doesn't flicker at the line
         const float BaseCooling = 4f;
         const float ProportionalCooling = 0.1f;
 

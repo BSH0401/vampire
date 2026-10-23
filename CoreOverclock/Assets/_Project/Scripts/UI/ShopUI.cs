@@ -19,16 +19,21 @@ namespace CoreOverclock
         class Slot
         {
             public Image Frame, Bar;
-            public Text Name, Info, SellLabel;
-            public Button Sell;
+            public Text Name, Info, SellLabel, ActLabel;
+            public Button Sell, Act;
         }
+
+        static readonly Color SlotColor = new(0.07f, 0.09f, 0.15f, 1f);
+        static readonly Color MergeSlotColor = new(0.14f, 0.12f, 0.04f, 1f);
 
         GameManager gm;
         Shop shop;
         Loadout loadout;
         GameObject root;
         Text title, summary, scrapLabel, rerollLabel, slotsTitle, chipsText, synergyText, statsText;
-        Button rerollButton, nextButton;
+        Button rerollButton, nextButton, marketButton;
+        Text marketLabel;
+        BlackMarketPanel market;
         readonly List<Card> cards = new();
         readonly List<Slot> slots = new();
         string summaryText;
@@ -42,11 +47,12 @@ namespace CoreOverclock
 
         SynergyPanel detail;
 
-        public static ShopUI Create(Canvas canvas, GameManager gm, Shop shop, Loadout loadout, SynergyPanel detail)
+        public static ShopUI Create(Canvas canvas, GameManager gm, Shop shop, Loadout loadout, SynergyPanel detail, BlackMarketPanel market)
         {
             var ui = canvas.gameObject.AddComponent<ShopUI>();
             ui.gm = gm;
             ui.detail = detail;
+            ui.market = market;
             ui.shop = shop;
             ui.loadout = loadout;
             ui.Build(canvas.transform);
@@ -71,6 +77,15 @@ namespace CoreOverclock
             scrapLabel = UIFactory.Label(UIFactory.Rect("Scrap", dim, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-48f, -40f), new Vector2(400f, 60f)),
                 "◆ 0", 48, Palette.Scrap, TextAnchor.MiddleRight);
 
+            // 암시장: only visible on visits where the smuggler is in.
+            marketButton = UIFactory.Button(dim, "암시장 상인 등장 ▶", Vector2.zero, new Vector2(380f, 64f), OpenMarket);
+            var mrt = (RectTransform)marketButton.transform;
+            mrt.anchorMin = mrt.anchorMax = new Vector2(0f, 1f);
+            mrt.pivot = new Vector2(0f, 1f);
+            mrt.anchoredPosition = new Vector2(40f, -30f);
+            marketLabel = marketButton.GetComponentInChildren<Text>();
+            marketLabel.fontSize = 26;
+
             // Offer cards
             float spacing = shop.SlotCount > 4 ? 380f : 400f;
             for (int i = 0; i < shop.SlotCount; i++)
@@ -91,7 +106,8 @@ namespace CoreOverclock
             {
                 int index = i;
                 float x = -625f + i * 250f;
-                slots.Add(BuildSlot(dim, new Vector2(x, -226f), () => Feedback(shop.Sell(index))));
+                slots.Add(BuildSlot(dim, new Vector2(x, -226f), () => Feedback(shop.Sell(index)),
+                    () => UpgradeOrMerge(index)));
             }
 
             // Compact synergy summary; the full tier list and fusion texts live in the detail window.
@@ -157,20 +173,24 @@ namespace CoreOverclock
             return card;
         }
 
-        Slot BuildSlot(Transform parent, Vector2 pos, UnityEngine.Events.UnityAction sell)
+        Slot BuildSlot(Transform parent, Vector2 pos, UnityEngine.Events.UnityAction sell, UnityEngine.Events.UnityAction act)
         {
             var slot = new Slot();
             var rt = UIFactory.Rect("WeaponSlot", parent, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), pos, new Vector2(235f, 130f));
-            slot.Frame = UIFactory.Image(rt, new Color(0.07f, 0.09f, 0.15f, 1f));
+            slot.Frame = UIFactory.Image(rt, SlotColor);
             var bar = UIFactory.Rect("Bar", rt, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), Vector2.zero, new Vector2(6f, 130f));
             slot.Bar = UIFactory.Image(bar, Color.white);
             slot.Name = UIFactory.Label(UIFactory.Rect("Name", rt, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -22f), new Vector2(220f, 34f)),
                 "", 24, Palette.Text);
             slot.Info = UIFactory.Label(UIFactory.Rect("Info", rt, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -54f), new Vector2(220f, 28f)),
                 "", 20, new Color(0.7f, 0.75f, 0.85f));
-            slot.Sell = UIFactory.Button(rt, "판매", new Vector2(0f, -41f), new Vector2(200f, 40f), sell);
+            // 강화 / 합치기 on the left, 판매 on the right.
+            slot.Act = UIFactory.Button(rt, "강화", new Vector2(-55f, -41f), new Vector2(106f, 40f), act);
+            slot.ActLabel = slot.Act.GetComponentInChildren<Text>();
+            slot.ActLabel.fontSize = 18;
+            slot.Sell = UIFactory.Button(rt, "판매", new Vector2(55f, -41f), new Vector2(106f, 40f), sell);
             slot.SellLabel = slot.Sell.GetComponentInChildren<Text>();
-            slot.SellLabel.fontSize = 22;
+            slot.SellLabel.fontSize = 18;
             return slot;
         }
 
@@ -189,9 +209,23 @@ namespace CoreOverclock
             Refresh();
             if (EventSystem.current) EventSystem.current.SetSelectedGameObject(nextButton.gameObject);
             if (DevCommandLine.OpenDetail) detail.Open();
+            if (DevCommandLine.OpenMarket) OpenMarket();
         }
 
-        public void Hide() => root.SetActive(false);
+        public void Hide()
+        {
+            root.SetActive(false);
+            if (market.IsOpen) market.Close();
+        }
+
+        void OpenMarket()
+        {
+            if (!shop.MarketOpen) return;
+            market.Open(() =>
+            {
+                if (EventSystem.current && marketButton) EventSystem.current.SetSelectedGameObject(marketButton.gameObject);
+            });
+        }
 
         static void Feedback(bool success) => AudioManager.Play(success ? SfxId.Buy : SfxId.Deny, 0.5f, 0f);
 
@@ -199,7 +233,9 @@ namespace CoreOverclock
         {
             if (!IsOpen) return;
             scrapLabel.text = $"◆ {gm.Scrap}";
-            if (!detail.IsOpen && !detail.ConsumedInputThisFrame && SynergyPanel.TogglePressed) detail.Open();
+            if (marketButton.gameObject.activeSelf)
+                marketLabel.color = Color.Lerp(Palette.Text, Palette.BlackMarket, 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 4f));
+            if (!market.IsOpen && !detail.IsOpen && !detail.ConsumedInputThisFrame && SynergyPanel.TogglePressed) detail.Open();
             if (fusionNoticeTime > 0f && (fusionNoticeTime -= Time.unscaledDeltaTime) <= 0f)
             {
                 summary.text = summaryText;
@@ -221,6 +257,30 @@ namespace CoreOverclock
         {
             foreach (var g in revealPanel.GetComponentsInChildren<Graphic>())
                 g.canvasRenderer.SetAlpha(a);
+        }
+
+        void UpgradeOrMerge(int index)
+        {
+            bool merge = loadout.CanMerge(index);
+            var weapon = loadout.Weapons[index];
+            var before = new HashSet<FusionId>(loadout.ActiveFusions);
+            bool ok = merge ? shop.Merge(index) : shop.Upgrade(index);
+            Feedback(ok);
+            if (!ok) return;
+
+            // Merging removes a copy, which can switch off 트윈 링크: say so instead of failing silently.
+            var lost = new List<string>();
+            foreach (var f in before) if (!loadout.Has(f)) lost.Add(Fusions.Get(f).Name);
+            string text = $"{(merge ? "합치기" : "강화")} 완료!  {WeaponGrades.Name(weapon.Data, weapon.Grade)}";
+            if (lost.Count > 0) text += $"   <color=#FF6B6B>({string.Join(", ", lost)} 해제됨)</color>";
+            ShowNotice(text, WeaponGrades.ColorOf(weapon.Grade));
+        }
+
+        void ShowNotice(string text, Color color, float duration = 3f)
+        {
+            summary.text = text;
+            summary.color = color;
+            fusionNoticeTime = duration;
         }
 
         void OnFusionCompleted(FusionId id, bool firstTime)
@@ -250,10 +310,12 @@ namespace CoreOverclock
 
             for (int i = 0; i < cards.Count; i++) RefreshCard(cards[i], shop.Offers[i], shop.BlockReason(i));
 
+            marketButton.gameObject.SetActive(shop.MarketOpen);
+
             rerollLabel.text = $"리롤  ◆ {shop.RerollCost}";
             rerollButton.interactable = gm.Scrap >= shop.RerollCost;
 
-            slotsTitle.text = $"장착 무기  {loadout.Weapons.Count} / {Player.MaxWeapons}";
+            slotsTitle.text = $"장착 무기  {loadout.Weapons.Count} / {loadout.MaxWeapons}   <size=20><color=#7F8AA8>같은 무기·같은 등급 2개 = 합치기</color></size>";
             for (int i = 0; i < slots.Count; i++)
             {
                 var s = slots[i];
@@ -261,20 +323,29 @@ namespace CoreOverclock
                 {
                     var w = loadout.Weapons[i];
                     var col = WeaponTags.ColorOf(w.Data.tag);
+                    bool merge = loadout.CanMerge(i);
+                    int cost = shop.UpgradeCost(i);
+                    s.Frame.color = merge ? MergeSlotColor : SlotColor;
                     s.Bar.color = col;
-                    s.Name.text = w.Data.displayName;
+                    s.Name.text = WeaponGrades.Name(w.Data, w.Grade);
                     s.Name.color = col;
-                    s.Info.text = $"{WeaponTags.KoreanName(w.Data.tag)} · 구매가 ◆{w.PaidPrice}";
+                    s.Info.text = $"{WeaponTags.KoreanName(w.Data.tag)} · 등급 <color=#{WeaponGrades.Hex(w.Grade)}>{WeaponGrades.Roman(w.Grade)}</color>";
+                    s.Act.gameObject.SetActive(true);
+                    s.Act.interactable = merge || (cost >= 0 && gm.Scrap >= cost);
+                    s.ActLabel.text = merge ? "<color=#FFD24D>합치기 ▲</color>" : cost < 0 ? "최고 등급" : $"강화 ◆{cost}";
                     s.Sell.gameObject.SetActive(true);
                     s.Sell.interactable = shop.CanSell(i);
-                    s.SellLabel.text = shop.CanSell(i) ? $"판매  +◆{Shop.SellValue(w)}" : "마지막 무기";
+                    s.SellLabel.text = shop.CanSell(i) ? $"판매 +{Shop.SellValue(w)}" : "마지막";
                 }
                 else
                 {
+                    bool locked = i >= loadout.MaxWeapons;
+                    s.Frame.color = SlotColor;
                     s.Bar.color = new Color(0.2f, 0.22f, 0.3f);
-                    s.Name.text = "빈 슬롯";
+                    s.Name.text = locked ? "잠긴 슬롯" : "빈 슬롯";
                     s.Name.color = new Color(0.4f, 0.45f, 0.55f);
-                    s.Info.text = "";
+                    s.Info.text = locked ? $"{Cores.Current.Name} 제약" : "";
+                    s.Act.gameObject.SetActive(false);
                     s.Sell.gameObject.SetActive(false);
                 }
             }
@@ -296,16 +367,28 @@ namespace CoreOverclock
             card.Header.color = color;
             card.Name.text = o.Name;
             card.Name.color = o.Sold ? new Color(0.4f, 0.45f, 0.55f) : color;
-            card.Kind.text = weapon ? $"무기 · {WeaponTags.KoreanName(o.Weapon.tag)} · T{o.Weapon.tier}" : $"패시브 칩셋 · T{o.Chip.tier}";
-            card.Body.text = o.Sold ? "" : weapon ? FusionPreview(o.Weapon) + WeaponBody(o.Weapon) : ChipBody(o.Chip);
+            card.Kind.text = weapon
+                ? $"무기 · {WeaponTags.KoreanName(o.Weapon.tag)} · T{o.Weapon.tier} · 등급 <color=#{WeaponGrades.Hex(o.Grade)}>{WeaponGrades.Roman(o.Grade)}</color>"
+                : $"패시브 칩셋 · T{o.Chip.tier}";
+            card.Body.text = o.Sold ? "" : weapon ? MergePreview(o) + FusionPreview(o.Weapon) + WeaponBody(o.Weapon, o.Grade) : ChipBody(o.Chip);
             card.Price.text = o.Sold ? "SOLD" : $"◆ {o.Price}";
             card.Price.color = o.Sold ? new Color(0.4f, 0.45f, 0.55f) : gm.Scrap >= o.Price ? Palette.Scrap : Palette.Danger;
 
             card.Buy.interactable = blocked == null;
-            card.BuyLabel.text = blocked ?? "구매";
+            card.BuyLabel.text = blocked ?? (weapon && !o.Sold && loadout.WeaponSlotsFull ? "구매 · 합치기" : "구매");
             card.Lock.interactable = !o.Sold;
             card.LockLabel.text = o.Locked ? "잠김" : "잠금";
             card.Frame.color = o.Locked ? new Color(0.16f, 0.14f, 0.05f, 1f) : new Color(0.07f, 0.09f, 0.15f, 1f);
+        }
+
+        /// <summary>Tells the player when an offer matches an owned weapon at the same grade.</summary>
+        string MergePreview(ShopOffer o)
+        {
+            if (loadout.MergeTargetFor(o.Weapon, o.Grade) < 0) return "";
+            int next = Mathf.Min(o.Grade + 1, WeaponGrades.Max);
+            return loadout.WeaponSlotsFull
+                ? $"<color=#FFD24D>▲ 구매 즉시 합치기 → 등급 {WeaponGrades.Roman(next)}</color>\n"
+                : "<color=#FFD24D>▲ 같은 무기 보유 · 합치기 가능</color>\n";
         }
 
         string FusionPreview(WeaponData w)
@@ -336,12 +419,13 @@ namespace CoreOverclock
             return $"<color=#{hex}>퓨전   {string.Join(" · ", names)}</color>";
         }
 
-        static string WeaponBody(WeaponData w)
+        static string WeaponBody(WeaponData w, int grade)
         {
             var sb = new StringBuilder();
             string count = w.projectileCount > 1 ? $" x{w.projectileCount}" : "";
-            sb.Append($"피해 {w.damage:0.#}{count}  ·  초당 {w.ShotsPerSecond:0.#}발\n");
-            sb.Append($"사거리 {w.range:0.#}  ·  발열 {w.heatPerShot * w.ShotsPerSecond:0.#}/s\n");
+            float rate = w.ShotsPerSecond * (1f + WeaponGrades.FireRateBonus(grade));
+            sb.Append($"피해 {w.damage * WeaponGrades.DamageMultiplier(grade):0.#}{count}  ·  초당 {rate:0.#}발\n");
+            sb.Append($"사거리 {w.range:0.#}  ·  발열 {w.heatPerShot * WeaponGrades.HeatMultiplier(grade) * rate:0.#}/s\n");
             if (w.pierce > 0) sb.Append($"관통 {w.pierce}\n");
             if (w.slowAmount > 0f) sb.Append($"둔화 {w.slowAmount * 100f:0}% ({w.slowDuration:0.#}s)\n");
             if (w.burnDamagePerSecond > 0f) sb.Append($"도트 {w.burnDamagePerSecond:0.#}/s ({w.burnDuration:0.#}s)\n");
@@ -396,13 +480,16 @@ namespace CoreOverclock
         {
             var s = loadout.Stats;
             float heatGen = 0f;
-            foreach (var w in loadout.Weapons) heatGen += w.Data.heatPerShot * w.Data.ShotsPerSecond * (1f + s.FireRatePct);
+            foreach (var w in loadout.Weapons)
+                heatGen += w.Data.heatPerShot * WeaponGrades.HeatMultiplier(w.Grade) * w.Data.ShotsPerSecond * (1f + s.FireRatePct + WeaponGrades.FireRateBonus(w.Grade));
             heatGen *= loadout.HeatGenMultiplier;
             string P(float v) => (v >= 0 ? "+" : "") + Mathf.RoundToInt(v * 100f) + "%";
-            return "<b>코어 상태</b>\n" +
+            var core = Cores.Current;
+            return $"<b>코어 상태</b>  <color=#{ColorUtility.ToHtmlStringRGB(core.Color)}>{core.Name}</color>\n" +
                    $"최대 HP {gm.Player.MaxHP:0}   이동 {P(s.MoveSpeedPct)}   공격력 {P(s.DamagePct)}\n" +
                    $"연사 {P(s.FireRatePct)}   치명타 {P(s.CritChance)}   발열 배율 x{loadout.HeatGenMultiplier:0.00}\n" +
-                   $"<color=#FF9A3C>예상 발열 {heatGen:0.#}/s</color>  (냉각 {4f + s.CoolingFlat:0.#}/s + 열의 10%)";
+                   $"<color=#FF9A3C>예상 발열 {heatGen:0.#}/s</color>  (냉각 {4f + s.CoolingFlat:0.#}/s + 열의 10%)" +
+                   (HeatSystem.OverclockThreshold < 70f ? $"  <color=#FF9A3C>오버클럭 {HeatSystem.OverclockThreshold:0}%~</color>" : "");
         }
     }
 }

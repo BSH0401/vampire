@@ -13,14 +13,14 @@ namespace CoreOverclock
 
         Text labLabel;
 
-        public static TitleScreen Create(Canvas canvas, GameManager gm, SettingsPanel settings, LabScreen lab)
+        public static TitleScreen Create(Canvas canvas, GameManager gm, SettingsPanel settings, LabScreen lab, CoreSelectScreen cores)
         {
             var ts = canvas.gameObject.AddComponent<TitleScreen>();
-            ts.Build(canvas.transform, gm, settings, lab);
+            ts.Build(canvas.transform, gm, settings, lab, cores);
             return ts;
         }
 
-        void Build(Transform canvas, GameManager gm, SettingsPanel settings, LabScreen lab)
+        void Build(Transform canvas, GameManager gm, SettingsPanel settings, LabScreen lab, CoreSelectScreen cores)
         {
             var dim = UIFactory.Stretch("TitleScreen", canvas);
             UIFactory.Image(dim, new Color(0.01f, 0.01f, 0.03f, 0.86f)).raycastTarget = true;
@@ -36,7 +36,7 @@ namespace CoreOverclock
             UIFactory.Label(UIFactory.Rect("Tagline", dim, c, c, new Vector2(0f, 95f), new Vector2(1600f, 40f)),
                 "몰려오는 고철 군단을 부수고, 코어를 오버클럭하여 궁극의 살인 병기를 조립하라.", 26, new Color(0.65f, 0.72f, 0.85f));
 
-            startButton = UIFactory.Button(dim, "게임 시작", new Vector2(0f, -30f), new Vector2(460f, 84f), gm.StartGame);
+            startButton = UIFactory.Button(dim, "게임 시작", new Vector2(0f, -30f), new Vector2(460f, 84f), () => { Hide(); cores.Open(Show); });
             var labButton = UIFactory.Button(dim, "연구소", new Vector2(0f, -125f), new Vector2(460f, 72f), () => { Hide(); lab.Open(Show); });
             labLabel = labButton.GetComponentInChildren<Text>();
             UIFactory.Button(dim, "설정", new Vector2(0f, -210f), new Vector2(460f, 72f), () => settings.Open(Hide, Show));

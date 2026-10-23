@@ -21,6 +21,11 @@ namespace CoreOverclock
     ///   -lab N                with -title: open the 연구소 on tab N (screenshots)
     ///   -detail               open the 시너지·퓨전 window whenever the shop opens (screenshots)
     ///   -meta N               pretend every permanent upgrade is level N and everything is unlocked
+    ///   -core ID              play this core (Standard, Furnace, Collector, Glacier, Twin, Glass)
+    ///   -blackmarket          the 암시장 opens in every shop
+    ///   -cores                with -title: open the 코어 선택 screen (screenshots)
+    ///   -openmarket           open the 암시장 window whenever it is in the shop (screenshots)
+    ///   (-loadout also accepts id:grade, e.g. minigun:3)
     /// </summary>
     public class DevCommandLine : MonoBehaviour
     {
@@ -33,6 +38,8 @@ namespace CoreOverclock
         public static string[] Loadout;
         public static int LabTab = -1;
         public static bool OpenDetail;
+        public static CoreId? CoreOverride;
+        public static bool ForceBlackMarket, OpenCoreSelect, OpenMarket;
         static string shotDir;
         static float[] shotTimes = { 5f, 12f };
         static float quitAfter = -1f;
@@ -49,6 +56,8 @@ namespace CoreOverclock
             Loadout = null;
             LabTab = -1;
             OpenDetail = false;
+            CoreOverride = null;
+            ForceBlackMarket = OpenCoreSelect = OpenMarket = false;
             WaveTimeOverride = -1f;
             StartWave = 1;
             shotDir = null;
@@ -72,6 +81,10 @@ namespace CoreOverclock
                     case "-lab": LabTab = (int)ParseFloat(next, 0f); break;
                     case "-detail": OpenDetail = true; break;
                     case "-meta": MetaLevel = (int)ParseFloat(next, 0f); break;
+                    case "-core": CoreOverride = Enum.TryParse(next, true, out CoreId core) ? core : null; Enabled = true; break;
+                    case "-blackmarket": ForceBlackMarket = true; break;
+                    case "-cores": OpenCoreSelect = true; break;
+                    case "-openmarket": OpenMarket = true; break;
                     case "-startwave": StartWave = (int)ParseFloat(next, 1f); break;
                     case "-shots": shotDir = next; Enabled = true; break;
                     case "-shottimes":
@@ -131,12 +144,23 @@ namespace CoreOverclock
             intermissionTime = gm.State == GameState.Intermission ? intermissionTime + Time.unscaledDeltaTime : 0f;
             if (AutoBuy && gm.State == GameState.Intermission && Mathf.Floor(prev * 4f) != Mathf.Floor(intermissionTime * 4f))
             {
-                // Weapons first until the slots are full, then chips; reroll while it can afford to.
+                // Merge first (free), then weapons until the slots are full, then 암시장, chips and upgrades;
+                // reroll while it can afford to.
+                var shop = gm.Shop;
                 bool bought = false;
+                for (int i = 0; i < gm.Loadout.Weapons.Count && !bought; i++)
+                    if (shop.Merge(i)) { bought = true; Debug.Log($"[Dev] Merge -> {gm.Loadout.Weapons[i].Data.id}:{gm.Loadout.Weapons[i].Grade}"); }
                 for (int pass = 0; pass < 2 && !bought; pass++)
-                for (int i = 0; i < gm.Shop.SlotCount && !bought; i++)
-                    if ((pass == 1 || gm.Shop.Offers[i].IsWeapon) && gm.Shop.Buy(i)) bought = true;
-                if (!bought && gm.Scrap > gm.Shop.RerollCost * 4) gm.Shop.Reroll();
+                for (int i = 0; i < shop.SlotCount && !bought; i++)
+                    if ((pass == 1 || shop.Offers[i].IsWeapon) && shop.Buy(i)) bought = true;
+                for (int i = 0; i < shop.MarketOffers.Count && !bought; i++)
+                    if (shop.BuyMarket(i)) { bought = true; Debug.Log($"[Dev] BlackMarket bought {(shop.MarketOffers[i].IsMod ? "mod" : shop.MarketOffers[i].Chip.id)}"); }
+                for (int i = 0; i < gm.Loadout.Weapons.Count && !bought; i++)
+                {
+                    int cost = shop.UpgradeCost(i);
+                    if (cost > 0 && gm.Scrap > cost * 2 && shop.Upgrade(i)) bought = true;
+                }
+                if (!bought && gm.Scrap > shop.RerollCost * 4) shop.Reroll();
             }
             if (Autopilot && intermissionTime > 3f) gm.NextWave();
 

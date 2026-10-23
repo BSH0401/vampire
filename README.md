@@ -33,11 +33,16 @@
   - 업적 2종 추가(첫 퓨전, 퓨전 도감 완성), 설정에 진행 초기화
   - 데모 빌드: 강화 3단계·티어 2 부품까지만 해금 가능
 - [x] **UI 가시성 개선**: 화면 흔들림 완화(적중·폭발 흔들림 제거/상한, 설정에서 끔/약하게/보통), 모든 화면비에서 UI가 잘리지 않도록 스케일 조정, 시너지·퓨전 상세 창(상점 Tab · 일시정지 메뉴), 상점 레이아웃 정리
+- [x] **Phase 6 (v0.6.0)** 시작 코어 · 무기 등급 · 암시장
+  - **시작 코어 6종** (게임 시작 → 코어 선택): 표준 / 용광로(오버클럭 60%부터·오버클럭 공격력↑·냉각↓) / 수집가(스크랩↑·상점 할인·무기 슬롯 5칸) / 빙하(냉각↑·발열↓·공격력↓) / 쌍둥이(시작 무기 2개·강화 할인·HP↓) / 유리(공격력·치명타↑·HP↓). 표준 외에는 코어 파편으로 해금 (데모는 쌍둥이·유리 제외)
+  - **무기 등급 I~IV**: 같은 무기·같은 등급 2개를 **합치기**하면 다음 등급 (슬롯이 꽉 찼을 때 같은 무기를 사면 자동 합치기), 스크랩으로 **강화**도 가능. 등급마다 피해 x1.4/x1.9/x2.6, 연사 +8/16/25%, 발열 감소. 후반 웨이브 상점에는 II~IV 등급 무기도 등장
+  - **암시장**: 웨이브 4 이후 정비 시간에 가끔(30%, 4번 연속 안 나오면 확정) 등장. 강력하지만 단점이 있는 금지 칩셋 8종과, 최대 HP를 대가로 무기 등급을 싸게 올리는 불법 개조를 판매
+  - 합치기로 트윈 링크가 풀리면 상점에 알림 표시, 업적 2종 추가(최고 등급, 뒷거래)
 
 ## 구조
-- `Assets/_Project/Scripts/Core` — GameManager(웨이브 흐름), HeatSystem, Loadout(스탯·시너지), Fusion(퓨전 정의), MetaProgress(코어 파편·영구 성장), Shop, 풀링/입력/유틸
+- `Assets/_Project/Scripts/Core` — GameManager(웨이브 흐름), HeatSystem, Loadout(스탯·시너지), Fusion(퓨전 정의), MetaProgress(코어 파편·영구 성장), Cores(시작 코어), WeaponGrades(무기 등급), BlackMarket(암시장), Shop, 풀링/입력/유틸
 - `Assets/_Project/Scripts/Gameplay` — Player, Weapon, Projectile, Enemy, Spawner, Scrap, DataTower, Arena, FX
-- `Assets/_Project/Scripts/UI` — HUD, ShopUI, TitleScreen/SettingsPanel, LabScreen(연구소), DamagePopups
+- `Assets/_Project/Scripts/UI` — HUD, ShopUI, TitleScreen/SettingsPanel, LabScreen(연구소), CoreSelectScreen(코어 선택), BlackMarketPanel(암시장 창), DamagePopups
 - `Assets/_Project/Scripts/Audio` — SoundSynth(효과음·음악 합성), AudioManager
 - `Assets/_Project/Scripts/Platform` — SteamService(업적), BuildFlavor(데모 여부)
 - `Assets/_Project/Data` — ScriptableObject 데이터(무기/칩셋/적/웨이브/상점)
@@ -55,5 +60,9 @@
 - `-meta N`: 모든 영구 강화를 N단계로 가정하고 전부 해금한 상태로 실행
 - `-loadout laser,cryo_shard`: 지정한 무기를 들고 시작 (퓨전 테스트)
 - `-title -lab N`: 연구소 N번 탭을 연 상태로 시작 (스크린샷용)
+- `-core Furnace`: 지정한 코어로 시작 (Standard, Furnace, Collector, Glacier, Twin, Glass)
+- `-loadout minigun:3`: `무기id:등급` 형식으로 등급 지정
+- `-blackmarket`: 매 상점마다 암시장 등장, `-openmarket`: 암시장 창을 바로 열기
+- `-title -cores`: 코어 선택 화면을 연 상태로 시작 (스크린샷용)
 
 테스트 실행 중에는 업적·코어 파편·해금 등 진행 상황이 저장되지 않습니다.

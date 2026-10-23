@@ -87,20 +87,27 @@ namespace CoreOverclock
     public class OwnedWeapon
     {
         public WeaponData Data;
+        /// <summary>Total scrap put into this weapon (purchase, merged copies, upgrades); the sell value is based on it.</summary>
         public int PaidPrice;
+        /// <summary>등급 I~IV (see <see cref="WeaponGrades"/>).</summary>
+        public int Grade = 1;
+        public bool MaxGrade => Grade >= WeaponGrades.Max;
     }
 
-    /// <summary>What the player has equipped: up to 6 weapons plus any number of chips.</summary>
+    /// <summary>What the player has equipped: up to 6 weapons (5 for some cores) plus any number of chips.</summary>
     public class Loadout
     {
         public readonly List<OwnedWeapon> Weapons = new();
         public readonly List<ChipData> Chips = new();
+        /// <summary>Run-long side effects that are not chips (암시장 불법 개조 HP loss).</summary>
+        public readonly List<StatModifier> RunModifiers = new();
 
         public PlayerStats Stats { get; private set; } = new();
         public SynergyState Synergy { get; private set; }
         /// <summary>Weapon-pair fusions currently active (see <see cref="Fusions"/>).</summary>
         public readonly HashSet<FusionId> ActiveFusions = new();
-        public bool WeaponSlotsFull => Weapons.Count >= Player.MaxWeapons;
+        public int MaxWeapons => Mathf.Clamp(Cores.Current.WeaponSlots, 1, Player.MaxWeapons);
+        public bool WeaponSlotsFull => Weapons.Count >= MaxWeapons;
 
         public event Action Changed;
         /// <summary>Raised during Recalculate for each fusion that just became active.</summary>
@@ -134,12 +141,73 @@ namespace CoreOverclock
             return result;
         }
 
-        public bool AddWeapon(WeaponData data, int paid)
+        public bool AddWeapon(WeaponData data, int paid, int grade = 1)
         {
             if (WeaponSlotsFull || !data) return false;
-            Weapons.Add(new OwnedWeapon { Data = data, PaidPrice = paid });
+            Weapons.Add(new OwnedWeapon { Data = data, PaidPrice = paid, Grade = Mathf.Clamp(grade, 1, WeaponGrades.Max) });
             Recalculate();
             return true;
+        }
+
+        // ─────────────── 등급 합치기 / 강화 ───────────────
+
+        /// <summary>Another weapon with the same data and grade that <paramref name="index"/> can absorb, or -1.</summary>
+        public int MergePartner(int index)
+        {
+            if (index < 0 || index >= Weapons.Count || Weapons[index].MaxGrade) return -1;
+            var w = Weapons[index];
+            for (int j = Weapons.Count - 1; j >= 0; j--)
+                if (j != index && Weapons[j].Data == w.Data && Weapons[j].Grade == w.Grade) return j;
+            return -1;
+        }
+
+        public bool CanMerge(int index) => MergePartner(index) >= 0;
+
+        /// <summary>Two copies at the same grade become one weapon of the next grade; frees a slot.</summary>
+        public bool Merge(int index)
+        {
+            int partner = MergePartner(index);
+            if (partner < 0) return false;
+            var w = Weapons[index];
+            w.Grade++;
+            w.PaidPrice += Weapons[partner].PaidPrice;
+            Weapons.RemoveAt(partner);
+            Recalculate();
+            return true;
+        }
+
+        /// <summary>Owned weapon a bought copy (same data and grade) would merge into when the slots are full, or -1.</summary>
+        public int MergeTargetFor(WeaponData data, int grade)
+        {
+            for (int i = 0; i < Weapons.Count; i++)
+                if (Weapons[i].Data == data && Weapons[i].Grade == grade && !Weapons[i].MaxGrade) return i;
+            return -1;
+        }
+
+        /// <summary>Upgrade, or a bought copy merged in when the slots are full.</summary>
+        public bool RaiseGrade(int index, int paid)
+        {
+            if (index < 0 || index >= Weapons.Count || Weapons[index].MaxGrade) return false;
+            Weapons[index].Grade++;
+            Weapons[index].PaidPrice += paid;
+            Recalculate();
+            return true;
+        }
+
+        public int HighestGrade
+        {
+            get
+            {
+                int g = 0;
+                foreach (var w in Weapons) g = Mathf.Max(g, w.Grade);
+                return g;
+            }
+        }
+
+        public void AddRunModifier(StatType stat, float value)
+        {
+            RunModifiers.Add(new StatModifier { stat = stat, value = value });
+            Recalculate();
         }
 
         public void RemoveWeaponAt(int index)
@@ -158,6 +226,8 @@ namespace CoreOverclock
         {
             var stats = new PlayerStats();
             MetaProgress.ApplyUpgrades(stats);
+            Cores.Apply(stats);
+            foreach (var m in RunModifiers) stats.Add(m.stat, m.value);
             foreach (var chip in Chips)
             foreach (var m in chip.modifiers)
                 stats.Add(m.stat, m.value);

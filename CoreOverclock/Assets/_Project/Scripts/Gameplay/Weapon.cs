@@ -34,13 +34,16 @@ namespace CoreOverclock
         float recoil;
 
         public WeaponData Data { get; private set; }
+        public int Grade { get; private set; } = 1;
 
-        public static Weapon Create(WeaponData data, Transform parent)
+        public static Weapon Create(OwnedWeapon owned, Transform parent)
         {
+            var data = owned.Data;
             var go = new GameObject($"Weapon_{data.id}");
             go.transform.SetParent(parent, false);
             var w = go.AddComponent<Weapon>();
             w.Data = data;
+            w.Grade = owned.Grade;
 
             w.color = WeaponTags.ColorOf(data.tag);
             w.pivot = new GameObject("Pivot").transform;
@@ -49,7 +52,9 @@ namespace CoreOverclock
             w.barrelRenderer.transform.localScale = new Vector3(0.42f, 0.14f, 1f);
             w.barrelRenderer.transform.localPosition = new Vector3(0.14f, 0f, 0f);
             w.barrel = w.barrelRenderer.transform;
-            w.mountRenderer = Visuals.Sprite("Mount", go.transform, ShapeSprites.Circle, w.color, 23, 0.22f);
+            // Higher grades get a bigger mount and a grade-coloured ring.
+            w.mountRenderer = Visuals.Sprite("Mount", go.transform, ShapeSprites.Circle, w.color, 23, 0.22f + 0.03f * (w.Grade - 1));
+            if (w.Grade > 1) Visuals.Sprite("GradeRing", go.transform, ShapeSprites.NeonCircle, WeaponGrades.ColorOf(w.Grade), 21, 0.3f + 0.04f * w.Grade);
             w.cooldown = Random.Range(0f, data.fireInterval);
             return w;
         }
@@ -78,10 +83,10 @@ namespace CoreOverclock
 
             if (!enabled || cooldown > 0f) return;
             var loadout = gm.Loadout;
-            float rate = 1f + loadout.Stats.FireRatePct + (Data.tag == WeaponTag.Energy ? loadout.Synergy.EnergyFireRateBonus : 0f);
+            float rate = 1f + loadout.Stats.FireRatePct + WeaponGrades.FireRateBonus(Grade) + (Data.tag == WeaponTag.Energy ? loadout.Synergy.EnergyFireRateBonus : 0f);
             cooldown = Data.fireInterval / Mathf.Max(0.2f, rate);
             Fire(origin + dir * MuzzleOffset, dir, BuildShot(loadout, heat));
-            heat.AddShotHeat(Data.heatPerShot * (loadout.IsTwin(Data) ? 1f - Fusions.TwinHeat : 1f));
+            heat.AddShotHeat(Data.heatPerShot * WeaponGrades.HeatMultiplier(Grade) * (loadout.IsTwin(Data) ? 1f - Fusions.TwinHeat : 1f));
         }
 
         ShotParams BuildShot(Loadout loadout, HeatSystem heat)
@@ -89,7 +94,7 @@ namespace CoreOverclock
             var stats = loadout.Stats;
             var syn = loadout.Synergy;
             bool ballistic = Data.tag == WeaponTag.Ballistic;
-            float dmgMul = (1f + stats.DamagePct) * heat.DamageMultiplier * (loadout.IsTwin(Data) ? 1f + Fusions.TwinDamage : 1f);
+            float dmgMul = (1f + stats.DamagePct) * heat.DamageMultiplier * WeaponGrades.DamageMultiplier(Grade) * (loadout.IsTwin(Data) ? 1f + Fusions.TwinDamage : 1f);
             var shot = new ShotParams
             {
                 Weapon = Data,
@@ -100,7 +105,7 @@ namespace CoreOverclock
                 CritChance = Data.critChance + stats.CritChance,
                 Pierce = Data.pierce + (ballistic ? syn.BonusPierce : 0),
                 Bounces = syn.WallBounces,
-                BurnDps = Data.burnDamagePerSecond * syn.BurnMultiplier * (1f + stats.DamagePct + stats.BurnDamagePct),
+                BurnDps = Data.burnDamagePerSecond * syn.BurnMultiplier * (1f + stats.DamagePct + stats.BurnDamagePct) * WeaponGrades.DamageMultiplier(Grade),
                 BurnDuration = Data.burnDuration,
                 SlowAmount = Data.slowAmount,
                 SlowDuration = Data.slowDuration,

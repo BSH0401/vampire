@@ -28,6 +28,7 @@ namespace CoreOverclock
         SettingsPanel settings;
         LabScreen lab;
         SynergyPanel synergyPanel;
+        CoreSelectScreen coreSelect;
         static bool skipTitleOnce; // "다시 시작" reloads the scene straight into a run
         DataTower[] towers;
         WaveDefinition currentWave;
@@ -74,7 +75,9 @@ namespace CoreOverclock
             Heat.StateChanged += OnHeatStateChanged;
             Loadout = new Loadout();
             var start = ChooseStartingWeapon();
-            Loadout.AddWeapon(start, start.price);
+            for (int i = 0; i < Mathf.Max(1, Cores.Current.StartWeaponCopies); i++) Loadout.AddWeapon(start, start.price);
+            // 쌍둥이 코어 starts with 트윈 링크 active: record it in the 도감 without the in-run fanfare.
+            foreach (var f in Loadout.ActiveFusions) MetaProgress.Discover(f);
             Loadout.FusionActivated += OnFusionActivated;
             MetaProgress.Changed += OnMetaChanged;
             var cam = Camera.main;
@@ -94,6 +97,7 @@ namespace CoreOverclock
             {
                 Player.SyncWeapons(Loadout);
                 if (Loadout.WeaponSlotsFull) Unlock(Achievements.FullArsenal);
+                if (Loadout.HighestGrade >= WeaponGrades.Max) Unlock(Achievements.MaxGrade);
             };
 
             ProjectileSystem.Create(world);
@@ -107,11 +111,14 @@ namespace CoreOverclock
             hud = HUD.Create(this);
             DamagePopups.Create(hud.Canvas);
             Shop = new Shop(shopDatabase, Loadout, this);
+            Shop.MarketPurchase += () => Unlock(Achievements.BlackMarket);
             synergyPanel = SynergyPanel.Create(hud.Canvas, this);
-            shopUI = ShopUI.Create(hud.Canvas, this, Shop, Loadout, synergyPanel);
+            var market = BlackMarketPanel.Create(hud.Canvas, this, Shop);
+            shopUI = ShopUI.Create(hud.Canvas, this, Shop, Loadout, synergyPanel, market);
             settings = SettingsPanel.Create(hud.Canvas);
             lab = LabScreen.Create(hud.Canvas, this);
-            title = TitleScreen.Create(hud.Canvas, this, settings, lab);
+            coreSelect = CoreSelectScreen.Create(hud.Canvas, this);
+            title = TitleScreen.Create(hud.Canvas, this, settings, lab, coreSelect);
             tutorial = new Tutorial(hud);
             hud.SetSettingsPanel(settings);
             hud.SetSynergyPanel(synergyPanel);
@@ -119,8 +126,11 @@ namespace CoreOverclock
             if (DevCommandLine.Loadout != null)
                 foreach (var id in DevCommandLine.Loadout)
                 {
-                    var w = shopDatabase.weapons.Find(x => x && x.id == id);
-                    if (w) Loadout.AddWeapon(w, w.price);
+                    // "id" or "id:grade"
+                    var parts = id.Split(':');
+                    var w = shopDatabase.weapons.Find(x => x && x.id == parts[0]);
+                    int grade = parts.Length > 1 && int.TryParse(parts[1], out var g) ? g : 1;
+                    if (w) Loadout.AddWeapon(w, w.price, grade);
                 }
 
             if (DevCommandLine.Enabled) gameObject.AddComponent<DevCommandLine>();
@@ -170,6 +180,11 @@ namespace CoreOverclock
             {
                 title.Hide();
                 lab.Open(title.Show, DevCommandLine.LabTab);
+            }
+            else if (DevCommandLine.OpenCoreSelect)
+            {
+                title.Hide();
+                coreSelect.Open(title.Show);
             }
         }
 
@@ -240,7 +255,7 @@ namespace CoreOverclock
         {
             if (DevCommandLine.Enabled)
                 Debug.Log($"[Dev] WaveEnd wave={Wave} time={Time.time - waveStartTime:F1}s timeLeft={TimeLeft:F1} kills={waveKills} " +
-                          $"scrap={Scrap} hpLeft={Player.HP:F0}/{Player.MaxHP:F0} dmgTaken={Player.DamageTakenThisWave:F0} weapons={Loadout.Weapons.Count} chips={Loadout.Chips.Count} bossAlive={(Boss != null ? $"{Boss.HP / Boss.MaxHP:P0}" : "no")} " +
+                          $"scrap={Scrap} hpLeft={Player.HP:F0}/{Player.MaxHP:F0} dmgTaken={Player.DamageTakenThisWave:F0} weapons={WeaponList()} chips={Loadout.Chips.Count} bossAlive={(Boss != null ? $"{Boss.HP / Boss.MaxHP:P0}" : "no")} " +
                           $"fps={(Time.frameCount - waveStartFrame) / Mathf.Max(0.01f, Time.realtimeSinceStartup - waveStartRealtime):F0}");
             TimeLeft = 0f;
             State = GameState.Resolving;
@@ -319,8 +334,16 @@ namespace CoreOverclock
             int amount = MetaProgress.CalculateReward(Wave, bossKills, TotalKills, victory);
             MetaProgress.AddFragments(amount);
             metaDirty = false; // a restart from the game-over screen reloads the scene anyway
+            if (DevCommandLine.Enabled) Debug.Log($"[Dev] Core={Cores.Current.Id} weapons={WeaponList()} chips={Loadout.Chips.Count}");
             if (DevCommandLine.Enabled) Debug.Log($"[Dev] Fragments +{amount} (wave={Wave} bosses={bossKills} kills={TotalKills} victory={victory})");
             return amount;
+        }
+
+        string WeaponList()
+        {
+            var parts = new System.Collections.Generic.List<string>();
+            foreach (var w in Loadout.Weapons) parts.Add($"{w.Data.id}:{w.Grade}");
+            return string.Join(",", parts);
         }
 
         void OnFusionActivated(FusionId id)

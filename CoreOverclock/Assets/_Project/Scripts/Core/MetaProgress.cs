@@ -43,6 +43,7 @@ namespace CoreOverclock
         static readonly HashSet<FusionId> discovered = new();
         static readonly HashSet<FusionId> unseen = new(); // discovered but not yet viewed in the 도감
         static string startWeapon;
+        static CoreId selectedCore;
         static bool devUnlockAll;
 
         public static event Action Changed;
@@ -64,6 +65,7 @@ namespace CoreOverclock
             foreach (var name in PlayerPrefs.GetString(Prefix + "fusions_new", "").Split(',', StringSplitOptions.RemoveEmptyEntries))
                 if (Enum.TryParse(name, out FusionId f)) unseen.Add(f);
             startWeapon = PlayerPrefs.GetString(Prefix + "start_weapon", "");
+            selectedCore = Enum.TryParse(PlayerPrefs.GetString(Prefix + "core", ""), out CoreId core) ? core : CoreId.Standard;
 
             // -meta N: balance sweeps with N upgrade levels and everything unlocked (never saved).
             if (DevCommandLine.Enabled && DevCommandLine.MetaLevel >= 0)
@@ -87,6 +89,7 @@ namespace CoreOverclock
             foreach (var f in unseen) names.Add(f.ToString());
             PlayerPrefs.SetString(Prefix + "fusions_new", string.Join(",", names));
             PlayerPrefs.SetString(Prefix + "start_weapon", startWeapon ?? "");
+            PlayerPrefs.SetString(Prefix + "core", selectedCore.ToString());
             PlayerPrefs.Save();
         }
 
@@ -153,6 +156,33 @@ namespace CoreOverclock
             set { Load(); startWeapon = value; Save(); }
         }
 
+        // ─────────────── Cores ───────────────
+
+        public static bool IsUnlocked(CoreDef c) => c != null && IsUnlocked(c.UnlockKey, c.UnlockCost);
+
+        public static bool TryUnlock(CoreDef c)
+        {
+            Load();
+            if (IsUnlocked(c) || !Cores.CanUnlockInThisBuild(c) || fragments < c.UnlockCost) return false;
+            fragments -= c.UnlockCost;
+            unlocked.Add(c.UnlockKey);
+            Save();
+            return true;
+        }
+
+        /// <summary>Saved core choice; falls back to the standard core if it was never unlocked.</summary>
+        public static CoreId SelectedCore
+        {
+            get { Load(); return IsUnlocked(Cores.Get(selectedCore)) ? selectedCore : CoreId.Standard; }
+            set
+            {
+                Load();
+                if (selectedCore == value) return;
+                selectedCore = value;
+                Save();
+            }
+        }
+
         // ─────────────── Fusion codex ───────────────
 
         /// <returns>true the first time a fusion is ever completed.</returns>
@@ -200,6 +230,7 @@ namespace CoreOverclock
             discovered.Clear();
             unseen.Clear();
             startWeapon = "";
+            selectedCore = CoreId.Standard;
             Save();
         }
     }

@@ -16,7 +16,8 @@ namespace CoreOverclock
         float invulnerableTimer, flashTimer, wallZapCooldown;
         readonly List<Weapon> weapons = new();
 
-        public float MaxHP => data.maxHP + Stats.MaxHP;
+        /// <summary>Never below 5 so drawback cores, chips and 암시장 trades can't zero it.</summary>
+        public float MaxHP => Mathf.Max(5f, data.maxHP + Stats.MaxHP);
         public float HP { get; private set; }
         public bool IsAlive => HP > 0f;
         public float PickupRange => data.pickupRange + Stats.PickupRange;
@@ -56,7 +57,7 @@ namespace CoreOverclock
         {
             foreach (var w in weapons) Destroy(w.gameObject);
             weapons.Clear();
-            foreach (var owned in loadout.Weapons) weapons.Add(Weapon.Create(owned.Data, transform));
+            foreach (var owned in loadout.Weapons) weapons.Add(Weapon.Create(owned, transform));
             LayoutWeapons();
             HP = Mathf.Min(HP, MaxHP);
         }
@@ -159,7 +160,8 @@ namespace CoreOverclock
             knock += push;
             if (invulnerableTimer > 0f || !IsAlive) return;
 
-            amount *= 1f - Mathf.Clamp(Stats.ArmorPct, 0f, 0.7f);
+            // Negative armor (암시장 drawbacks) increases damage taken, up to +50%.
+            amount *= 1f - Mathf.Clamp(Stats.ArmorPct, -0.5f, 0.7f);
             DamageTakenThisWave += amount;
             invulnerableTimer = data.invulnerableTime;
             if (DevCommandLine.God) return;
