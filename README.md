@@ -76,3 +76,13 @@
 - `-title -cores`: 코어 선택 화면을 연 상태로 시작 (스크린샷용)
 
 테스트 실행 중에는 업적·코어 파편·해금 등 진행 상황이 저장되지 않습니다.
+
+### 자동 밸런스 테스트
+`Tools/balance_run.ps1` — 빌드를 화면 없이 여러 판 자동 플레이하고 판별 리포트(JSON)를 모아 `runs.csv`·`summary.md`로 집계합니다.
+```powershell
+.\Tools\balance_run.ps1 -Runs 3                      # 코어 6종 x 3판
+.\Tools\balance_run.ps1 -Cores Furnace,Glass -Meta 2  # 일부 코어, 영구 강화 2단계 가정
+```
+- 결과는 `%LOCALAPPDATA%\CoreOverclock\balance\<날짜>`에 저장. 원본 로그는 그 안의 `logs\`에만 남고, `-WikiRaw <폴더>`를 주면 수치 파일(리포트·CSV·요약)만 복사합니다.
+- 게임 쪽 옵션: `-report <폴더>`(판이 끝나면 JSON 저장), `-quitonend`(끝나면 종료), `-seed N`(시드 고정, 리포트에 기록됨)
+- 리포트에는 게임 수치만 들어가고 경로·사용자 이름·하드웨어 정보는 들어가지 않습니다.

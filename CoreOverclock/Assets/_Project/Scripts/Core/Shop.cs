@@ -114,6 +114,7 @@ namespace CoreOverclock
                 loadout.AddRunModifier(StatType.MaxHP, -BlackMarket.ModHpCost);
             }
             else loadout.AddChip(o.Chip);
+            RunReport.Count("market", o.IsMod ? "mod" : o.Chip.id);
             MarketPurchase?.Invoke();
             Changed?.Invoke();
             return true;
@@ -223,6 +224,7 @@ namespace CoreOverclock
             int cost = UpgradeCost(weaponIndex);
             if (cost < 0 || !gm.TrySpendScrap(cost)) return false;
             loadout.RaiseGrade(weaponIndex, cost);
+            RunReport.Count("upgrade");
             Changed?.Invoke();
             return true;
         }
@@ -230,6 +232,7 @@ namespace CoreOverclock
         public bool Merge(int weaponIndex)
         {
             if (!loadout.Merge(weaponIndex)) return false;
+            RunReport.Count("merge");
             Changed?.Invoke();
             return true;
         }

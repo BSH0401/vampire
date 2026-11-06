@@ -25,6 +25,9 @@ namespace CoreOverclock
     ///   -blackmarket          the 암시장 opens in every shop
     ///   -cores                with -title: open the 코어 선택 screen (screenshots)
     ///   -openmarket           open the 암시장 window whenever it is in the shop (screenshots)
+    ///   -report DIR           write a JSON summary of the run to DIR when it ends (RunReport)
+    ///   -quitonend            quit automatically when the run ends (victory or death)
+    ///   -seed N               fixed random seed (a random one is picked and logged with -report)
     ///   (-loadout also accepts id:grade, e.g. minigun:3)
     /// </summary>
     public class DevCommandLine : MonoBehaviour
@@ -40,6 +43,9 @@ namespace CoreOverclock
         public static bool OpenDetail;
         public static CoreId? CoreOverride;
         public static bool ForceBlackMarket, OpenCoreSelect, OpenMarket;
+        public static string ReportDir;
+        public static bool QuitOnEnd;
+        public static int Seed;
         static string shotDir;
         static float[] shotTimes = { 5f, 12f };
         static float quitAfter = -1f;
@@ -58,6 +64,9 @@ namespace CoreOverclock
             OpenDetail = false;
             CoreOverride = null;
             ForceBlackMarket = OpenCoreSelect = OpenMarket = false;
+            ReportDir = null;
+            QuitOnEnd = false;
+            bool seeded = false;
             WaveTimeOverride = -1f;
             StartWave = 1;
             shotDir = null;
@@ -85,6 +94,9 @@ namespace CoreOverclock
                     case "-blackmarket": ForceBlackMarket = true; break;
                     case "-cores": OpenCoreSelect = true; break;
                     case "-openmarket": OpenMarket = true; break;
+                    case "-report": ReportDir = next; Enabled = true; break;
+                    case "-quitonend": QuitOnEnd = true; break;
+                    case "-seed": Seed = (int)ParseFloat(next, 0f); seeded = true; break;
                     case "-startwave": StartWave = (int)ParseFloat(next, 1f); break;
                     case "-shots": shotDir = next; Enabled = true; break;
                     case "-shottimes":
@@ -93,6 +105,10 @@ namespace CoreOverclock
                     case "-quitafter": quitAfter = ParseFloat(next, -1f); Enabled = true; break;
                 }
             }
+
+            // Reports record the seed so an odd run can be replayed with -seed.
+            if (!seeded && ReportDir != null) { Seed = Environment.TickCount & 0x7fffffff; seeded = true; }
+            if (seeded) UnityEngine.Random.InitState(Seed);
         }
 
         static float ParseFloat(string s, float fallback) =>
@@ -167,6 +183,7 @@ namespace CoreOverclock
             if (quitAfter > 0f && t >= quitAfter)
             {
                 Debug.Log($"[Dev] Quit. wave={gm.Wave} state={gm.State} kills={gm.TotalKills} scrap={gm.Scrap} hp={gm.Player.HP}");
+                RunReport.Finish(gm, "quit", gm.BossKills, 0);
                 Application.Quit();
             }
         }

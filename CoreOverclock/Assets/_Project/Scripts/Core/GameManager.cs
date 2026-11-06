@@ -38,6 +38,7 @@ namespace CoreOverclock
         float scrapRemainder, waveStartTime;
         float lastOverclockBanner = -10f;
         int bossKills;
+        float lastWaveSeconds;
         bool metaDirty; // 연구소 purchases since this scene loaded: rebuild the run on start
 
         public static GameManager Instance { get; private set; }
@@ -53,6 +54,7 @@ namespace CoreOverclock
         public float TimeLeft { get; private set; }
         public int Scrap { get; private set; }
         public int TotalKills { get; private set; }
+        public int BossKills => bossKills;
         /// <summary>A fusion became active; the flag is true the first time it is ever discovered.</summary>
         public event System.Action<FusionId, bool> FusionCompleted;
         public bool PlayerCanMove => State == GameState.Combat || State == GameState.Resolving;
@@ -216,6 +218,7 @@ namespace CoreOverclock
 
         void StartWave(int wave)
         {
+            RunReport.Begin(this);
             Wave = wave;
             var def = currentWave = waveTable.Get(wave);
             waveStartTime = Time.time;
@@ -257,6 +260,7 @@ namespace CoreOverclock
                 Debug.Log($"[Dev] WaveEnd wave={Wave} time={Time.time - waveStartTime:F1}s timeLeft={TimeLeft:F1} kills={waveKills} " +
                           $"scrap={Scrap} hpLeft={Player.HP:F0}/{Player.MaxHP:F0} dmgTaken={Player.DamageTakenThisWave:F0} weapons={WeaponList()} chips={Loadout.Chips.Count} bossAlive={(Boss != null ? $"{Boss.HP / Boss.MaxHP:P0}" : "no")} " +
                           $"fps={(Time.frameCount - waveStartFrame) / Mathf.Max(0.01f, Time.realtimeSinceStartup - waveStartRealtime):F0}");
+            lastWaveSeconds = Time.time - waveStartTime;
             TimeLeft = 0f;
             State = GameState.Resolving;
             Heat.ResetForWave(); // don't carry the last reading into the shop screen
@@ -283,6 +287,7 @@ namespace CoreOverclock
 
             if (Wave >= TotalWaves)
             {
+                RunReport.Wave(this, waveKills, Scrap - waveScrapStart, lastWaveSeconds, false);
                 State = GameState.GameOver;
                 Unlock(BuildFlavor.IsDemo ? Achievements.DemoClear : Achievements.Escape);
                 AudioManager.PlayMusic(MusicId.None);
@@ -294,6 +299,7 @@ namespace CoreOverclock
             // 결산: wave clear bonus on top of collected scrap.
             int bonus = WaveClearBonus(Wave);
             Scrap += bonus;
+            RunReport.Wave(this, waveKills, Scrap - waveScrapStart, lastWaveSeconds, false);
 
             // 코어 작업실
             State = GameState.Intermission;
@@ -313,6 +319,7 @@ namespace CoreOverclock
             if (State == GameState.GameOver) return;
             State = GameState.GameOver;
             if (DevCommandLine.Enabled) Debug.Log($"[Dev] PlayerDied wave={Wave} after {Time.time - waveStartTime:F1}s");
+            RunReport.Wave(this, waveKills, Scrap - waveScrapStart, Time.time - waveStartTime, true);
             Spawner.StopAll();
             EnemyProjectileSystem.ClearAll();
             foreach (var e in Enemy.Active.ToArray()) e.FreezeAndDissolve(Random.Range(0.3f, 1f));
@@ -336,7 +343,16 @@ namespace CoreOverclock
             metaDirty = false; // a restart from the game-over screen reloads the scene anyway
             if (DevCommandLine.Enabled) Debug.Log($"[Dev] Core={Cores.Current.Id} weapons={WeaponList()} chips={Loadout.Chips.Count}");
             if (DevCommandLine.Enabled) Debug.Log($"[Dev] Fragments +{amount} (wave={Wave} bosses={bossKills} kills={TotalKills} victory={victory})");
+            RunReport.Finish(this, victory ? "victory" : "death", bossKills, amount);
+            if (DevCommandLine.QuitOnEnd) StartCoroutine(QuitSoon());
             return amount;
+        }
+
+        /// <summary>-quitonend: batch balance runs close the game once the run is over.</summary>
+        static IEnumerator QuitSoon()
+        {
+            yield return new WaitForSecondsRealtime(1f);
+            Application.Quit();
         }
 
         string WeaponList()
@@ -446,6 +462,7 @@ namespace CoreOverclock
             }
             else if (s == HeatState.Meltdown)
             {
+                RunReport.Count("meltdown");
                 hud.ShowBanner("MELTDOWN", Palette.Danger, 1.5f);
                 AudioManager.Play(SfxId.Meltdown, 0.7f, 0f);
                 Unlock(Achievements.FirstMeltdown);
